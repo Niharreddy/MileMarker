@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "RoadMemo",
+    "slug": "roadmemo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "roadmemo",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-dev-client",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow RoadMemo to track the roads you drive, even in the background.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow RoadMemo to read photo locations so it can attach your photos to the right spot on the map.",
+          "savePhotosPermission": false,
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.nihar.roadmemo",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
+    },
+    "splash": {
+      "backgroundColor": "#ffffff",
+      "resizeMode": "contain"
+    },
+    "android": {
+      "package": "com.nihar.roadmemo",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "READ_MEDIA_LOCATION",
+        "READ_MEDIA_IMAGES",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ]
+    },
+    "owner": "gniharreddy0407",
+    "extra": {
+      "eas": {
+        "projectId": "f1139979-de0e-47db-8ecb-899391c610d3"
+      }
+    }
+  }
+}
