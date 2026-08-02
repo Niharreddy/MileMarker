@@ -16,7 +16,7 @@ const variantToPaperMode: Record<AppButtonVariant, PaperButtonProps["mode"]> = {
 };
 
 /**
- * Thin wrapper around Paper's Button so call sites use RoadMemo's own
+ * Thin wrapper around Paper's Button so call sites use Mile Marker's own
  * variant vocabulary (primary/secondary/outline/text) instead of Paper's
  * `mode` prop — keeps the design-system choice swappable without touching
  * every screen.

@@ -1,8 +1,8 @@
 # Features
 
-This folder is intentionally empty in Phase 1 — no feature has business
-logic yet. When a feature (trips, memories, GPS tracking, ...) gains real
-behavior, it gets its own folder here, structured like:
+Feature-based folders for anything with real business logic — no longer
+empty now that `map` (location/permissions/map rendering) and `trips`
+(trip recording/history) exist. Structure for a feature folder:
 
 ```
 src/features/trips/
@@ -18,9 +18,10 @@ Rules of thumb:
 - Cross-cutting UI (buttons, text, headers) stays in `src/components`, not
   duplicated per feature.
 - A feature should not import another feature's internals — only its
-  `index.ts` barrel.
+  `index.ts` barrel. `trips` imports `Coordinates`/`Pin` from `map`'s barrel,
+  for example, never from `map/types.ts` directly.
 - If something is used by two or more features, it belongs in
   `src/services`, `src/store`, or `src/hooks` instead of a feature folder.
 
-Anticipated first features: `trips` (GPS recording/history), `memories`
-(notes/photos/ratings attached to locations), `map` (MapLibre rendering).
+Still to come: `memories` (notes/ratings/photos browsed independent of a
+trip, once local storage exists).

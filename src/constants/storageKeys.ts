@@ -4,7 +4,7 @@
  * string literal, so key collisions and orphaned keys are easy to spot.
  */
 export const StorageKeys = {
-  settingsStore: "roadmemo.settings",
+  settingsStore: "milemarker.settings",
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

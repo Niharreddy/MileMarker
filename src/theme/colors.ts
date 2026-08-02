@@ -3,31 +3,38 @@
  * consume colors through `lightColors` / `darkColors` (or `useAppTheme()`),
  * never import `palette` outside this file. That indirection is what lets us
  * re-theme the whole app by editing values in one place.
+ *
+ * Warm, sunset-and-road-trip palette: terracotta as the primary (adventure,
+ * warmth), a deep teal for success/accent moments (ocean, exploration), and
+ * cream/sand neutrals instead of clinical grays — meant to read as "travel
+ * journal," not "dashboard."
  */
 const palette = {
-  blue50: "#EAF1FF",
-  blue100: "#D1E3FF",
-  blue400: "#3E7BFA",
-  blue500: "#2563EB",
-  blue600: "#1D4ED8",
-  blue900: "#122A5C",
+  terracotta100: "#FBE3D4",
+  terracotta400: "#E0703F",
+  terracotta500: "#D97A56",
+  terracotta600: "#C15A32",
+  terracotta900: "#7A3418",
 
-  slate0: "#FFFFFF",
-  slate50: "#F8FAFC",
-  slate100: "#F1F5F9",
-  slate200: "#E2E8F0",
-  slate300: "#CBD5E1",
-  slate400: "#94A3B8",
-  slate500: "#64748B",
-  slate600: "#475569",
-  slate700: "#334155",
-  slate800: "#1E293B",
-  slate900: "#0F172A",
-  slate950: "#0B1120",
+  teal400: "#4FBDAF",
+  teal500: "#2A9D8F",
 
-  green500: "#16A34A",
-  amber500: "#D97706",
-  red500: "#DC2626",
+  amber500: "#E9A23B",
+  coral500: "#C6432B",
+  coral400: "#E2604A",
+
+  sand0: "#FFFDF9",
+  sand50: "#FFF8F1",
+  sand100: "#F3E7D8",
+  sand200: "#E8D9C5",
+  sand300: "#C9B8A6",
+  sand400: "#A3907C",
+  sand600: "#7A6A5C",
+  sand800: "#3A2E22",
+  sand900: "#2B211B",
+
+  espresso800: "#2A2118",
+  espresso900: "#1E1814",
 } as const;
 
 export type AppColorScheme = {
@@ -55,49 +62,49 @@ export type AppColorScheme = {
 };
 
 export const lightColors: AppColorScheme = {
-  primary: palette.blue500,
-  onPrimary: palette.slate0,
-  primaryContainer: palette.blue50,
-  onPrimaryContainer: palette.blue900,
+  primary: palette.terracotta500,
+  onPrimary: palette.sand0,
+  primaryContainer: palette.terracotta100,
+  onPrimaryContainer: palette.terracotta900,
 
-  background: palette.slate50,
-  onBackground: palette.slate900,
-  surface: palette.slate0,
-  onSurface: palette.slate900,
-  surfaceVariant: palette.slate100,
-  onSurfaceVariant: palette.slate600,
+  background: palette.sand50,
+  onBackground: palette.sand900,
+  surface: palette.sand0,
+  onSurface: palette.sand900,
+  surfaceVariant: palette.sand100,
+  onSurfaceVariant: palette.sand600,
 
-  border: palette.slate200,
-  textPrimary: palette.slate900,
-  textSecondary: palette.slate500,
-  textDisabled: palette.slate300,
+  border: palette.sand200,
+  textPrimary: palette.sand900,
+  textSecondary: palette.sand600,
+  textDisabled: palette.sand300,
 
-  success: palette.green500,
+  success: palette.teal500,
   warning: palette.amber500,
-  error: palette.red500,
-  onError: palette.slate0,
+  error: palette.coral500,
+  onError: palette.sand0,
 };
 
 export const darkColors: AppColorScheme = {
-  primary: palette.blue400,
-  onPrimary: palette.slate950,
-  primaryContainer: palette.blue900,
-  onPrimaryContainer: palette.blue100,
+  primary: palette.terracotta400,
+  onPrimary: palette.espresso900,
+  primaryContainer: palette.terracotta900,
+  onPrimaryContainer: palette.terracotta100,
 
-  background: palette.slate950,
-  onBackground: palette.slate100,
-  surface: palette.slate900,
-  onSurface: palette.slate100,
-  surfaceVariant: palette.slate800,
-  onSurfaceVariant: palette.slate400,
+  background: palette.espresso900,
+  onBackground: palette.sand100,
+  surface: palette.espresso800,
+  onSurface: palette.sand100,
+  surfaceVariant: palette.sand800,
+  onSurfaceVariant: palette.sand300,
 
-  border: palette.slate700,
-  textPrimary: palette.slate100,
-  textSecondary: palette.slate400,
-  textDisabled: palette.slate600,
+  border: palette.sand800,
+  textPrimary: palette.sand100,
+  textSecondary: palette.sand300,
+  textDisabled: palette.sand600,
 
-  success: palette.green500,
+  success: palette.teal400,
   warning: palette.amber500,
-  error: palette.red500,
-  onError: palette.slate950,
+  error: palette.coral400,
+  onError: palette.espresso900,
 };

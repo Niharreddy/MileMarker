@@ -1,12 +1,12 @@
 import type { ApiErrorShape } from "./types";
 
 /**
- * RoadMemo is offline-first and Phase 1 ships with no backend, so this has
- * no real consumers yet — it exists so feature code has one place to add
- * network calls later (e.g. a future sync/backup service) instead of each
- * feature inventing its own fetch wrapper.
+ * Mile Marker is offline-first and Phase 1 ships with no backend, so this
+ * has no real consumers yet — it exists so feature code has one place to
+ * add network calls later (e.g. a future sync/backup service) instead of
+ * each feature inventing its own fetch wrapper.
  */
-const API_BASE_URL = "https://api.roadmemo.app";
+const API_BASE_URL = "https://api.milemarker.app";
 
 export class ApiError extends Error implements ApiErrorShape {
   status: number;

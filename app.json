@@ -1,31 +1,32 @@
 {
   "expo": {
-    "name": "RoadMemo",
-    "slug": "roadmemo",
+    "name": "Mile Marker",
+    "slug": "mile-marker",
     "version": "0.1.0",
     "orientation": "portrait",
-    "scheme": "roadmemo",
+    "scheme": "milemarker",
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-dev-client",
+      "expo-task-manager",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow RoadMemo to track the roads you drive, even in the background.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Mile Marker to track the roads you drive, even in the background.",
           "isAndroidBackgroundLocationEnabled": true
         }
       ],
       [
         "expo-media-library",
         {
-          "photosPermission": "Allow RoadMemo to read photo locations so it can attach your photos to the right spot on the map.",
+          "photosPermission": "Allow Mile Marker to read photo locations so it can attach your photos to the right spot on the map.",
           "savePhotosPermission": false,
           "isAccessMediaLocationEnabled": true
         }
       ]
     ],
     "ios": {
-      "bundleIdentifier": "com.nihar.roadmemo",
+      "bundleIdentifier": "com.nihar.milemarker",
       "infoPlist": {
         "UIBackgroundModes": [
           "location"
@@ -37,7 +38,7 @@
       "resizeMode": "contain"
     },
     "android": {
-      "package": "com.nihar.roadmemo",
+      "package": "com.nihar.milemarker",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
@@ -56,7 +57,7 @@
     "owner": "gniharreddy0407",
     "extra": {
       "eas": {
-        "projectId": "f1139979-de0e-47db-8ecb-899391c610d3"
+        "projectId": "aa4c8191-81cc-4ce4-8a10-9e8f6304ca67"
       }
     }
   }

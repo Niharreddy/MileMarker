@@ -1,17 +1,99 @@
 import React from "react";
+import { StyleSheet, View } from "react-native";
+import { v4 as uuid } from "uuid";
 
-import { AppHeader, AppText, ScreenContainer } from "@/components";
+import { AppHeader, LoadingIndicator, ScreenContainer } from "@/components";
+import {
+  AddPinButton,
+  PermissionGate,
+  RouteMap,
+  useCurrentLocation,
+  useLocationPermission,
+} from "@/features/map";
+import {
+  SaveTripDialog,
+  TripControls,
+  TripRecordingStats,
+  TripSearchBar,
+  useTripRecorder,
+  useTripStore,
+} from "@/features/trips";
+import { spacing, useAppTheme } from "@/theme";
 
-/**
- * Map tab root. Will host the live map + "roads you've driven" view once
- * GPS tracking and MapLibre are wired up in a later phase — placeholder
- * only for now.
- */
 export function HomeScreen() {
+  const theme = useAppTheme();
+  const locationPermission = useLocationPermission();
+  const { coordinates } = useCurrentLocation(locationPermission.isGranted);
+
+  const activeTrip = useTripStore((state) => state.activeTrip);
+  const addPinToActiveTrip = useTripStore((state) => state.addPinToActiveTrip);
+  const isBackgroundTrackingActive = useTripStore((state) => state.isBackgroundTrackingActive);
+  // Background task already records points for this trip — don't double-record.
+  useTripRecorder(coordinates, !isBackgroundTrackingActive);
+
+  if (locationPermission.isChecking) {
+    return (
+      <ScreenContainer>
+        <LoadingIndicator fullscreen />
+      </ScreenContainer>
+    );
+  }
+
+  if (!locationPermission.isGranted) {
+    return (
+      <ScreenContainer>
+        <AppHeader title="Home" />
+        <PermissionGate
+          title="Location access needed"
+          message="Mile Marker uses your location to center the map and place photo pins where you are."
+          actionLabel="Enable location"
+          onRequestAccess={locationPermission.request}
+        />
+      </ScreenContainer>
+    );
+  }
+
   return (
     <ScreenContainer>
       <AppHeader title="Home" />
-      <AppText color="secondary">Your map will live here.</AppText>
+      <TripSearchBar />
+
+      <View style={[styles.mapBox, { borderColor: theme.palette.border }]}>
+        <RouteMap
+          currentLocation={coordinates}
+          pins={activeTrip?.pins ?? []}
+          routeCoordinates={activeTrip?.points}
+        />
+        {activeTrip ? (
+          <AddPinButton
+            disabled={!coordinates}
+            onPickPhoto={(uri) => {
+              if (!coordinates) return;
+              addPinToActiveTrip({ id: uuid(), uri, coordinates, createdAt: Date.now() });
+            }}
+          />
+        ) : null}
+      </View>
+
+      {activeTrip ? <TripRecordingStats trip={activeTrip} /> : null}
+
+      <View style={styles.spacer} />
+
+      <TripControls />
+      <SaveTripDialog />
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  mapBox: {
+    height: 220,
+    marginTop: spacing.sm,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  spacer: {
+    flex: 1,
+  },
+});

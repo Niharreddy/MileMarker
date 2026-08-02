@@ -6,7 +6,7 @@ import type { StateStorage } from "zustand/middleware";
  * preferences today; future phases can add `new MMKV({ id: "..." })`
  * instances for larger/sensitive data without touching this one).
  */
-export const appStorage = new MMKV({ id: "roadmemo.app" });
+export const appStorage = new MMKV({ id: "milemarker.app" });
 
 /**
  * Adapts MMKV's sync get/set/delete API to zustand's `persist` middleware
