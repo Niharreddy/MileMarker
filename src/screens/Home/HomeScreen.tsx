@@ -11,6 +11,7 @@ import {
   useLocationPermission,
 } from "@/features/map";
 import {
+  LifetimeStats,
   SaveTripDialog,
   TripControls,
   TripRecordingStats,
@@ -23,13 +24,13 @@ import { spacing, useAppTheme } from "@/theme";
 export function HomeScreen() {
   const theme = useAppTheme();
   const locationPermission = useLocationPermission();
-  const { coordinates } = useCurrentLocation(locationPermission.isGranted);
+  const { coordinates, speedMps } = useCurrentLocation(locationPermission.isGranted);
 
   const activeTrip = useTripStore((state) => state.activeTrip);
   const addPinToActiveTrip = useTripStore((state) => state.addPinToActiveTrip);
   const isBackgroundTrackingActive = useTripStore((state) => state.isBackgroundTrackingActive);
-  // Background task already records points for this trip — don't double-record.
-  useTripRecorder(coordinates, !isBackgroundTrackingActive);
+  // The always-on background subscription already covers this — don't double-feed samples.
+  useTripRecorder(coordinates, speedMps, !isBackgroundTrackingActive);
 
   if (locationPermission.isChecking) {
     return (
@@ -57,6 +58,7 @@ export function HomeScreen() {
     <ScreenContainer>
       <AppHeader title="Home" />
       <TripSearchBar />
+      {activeTrip ? null : <LifetimeStats />}
 
       <View style={[styles.mapBox, { borderColor: theme.palette.border }]}>
         <RouteMap
@@ -77,8 +79,6 @@ export function HomeScreen() {
 
       {activeTrip ? <TripRecordingStats trip={activeTrip} /> : null}
 
-      <View style={styles.spacer} />
-
       <TripControls />
       <SaveTripDialog />
     </ScreenContainer>
@@ -87,13 +87,11 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   mapBox: {
-    height: 220,
+    flex: 1,
+    minHeight: 360,
     marginTop: spacing.sm,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
-  },
-  spacer: {
-    flex: 1,
   },
 });

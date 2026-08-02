@@ -12,12 +12,14 @@ import {
   useTripStore,
 } from "@/features/trips";
 import type { RootStackParamList } from "@/navigation";
+import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TripDetail">;
 
 export function TripDetailScreen({ route }: Props) {
   const theme = useAppTheme();
+  const unitPreference = useSettingsStore((state) => state.unitPreference);
   const trip = useTripStore((state) =>
     state.pastTrips.find((candidate) => candidate.id === route.params.tripId)
   );
@@ -35,7 +37,7 @@ export function TripDetailScreen({ route }: Props) {
       <AppText variant="titleLarge">{trip.name}</AppText>
       <AppText color="secondary" style={styles.meta}>
         {formatTripStartedAt(trip.startedAt)} · {formatTripDuration(trip.startedAt, trip.endedAt)} ·{" "}
-        {formatDistance(calculateTripDistanceMeters(trip.points))}
+        {formatDistance(calculateTripDistanceMeters(trip.points), unitPreference)}
       </AppText>
 
       <View style={[styles.mapContainer, { borderColor: theme.palette.border }]}>

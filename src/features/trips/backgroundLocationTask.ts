@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 
-import { useTripStore } from "./store/tripStore";
+import { handleLocationSample } from "./autoDetect";
 
 export const BACKGROUND_LOCATION_TASK = "milemarker-background-location";
 
@@ -12,8 +12,12 @@ export const BACKGROUND_LOCATION_TASK = "milemarker-background-location";
  * dispatching the event, so the task has to already be defined by then.
  * Imported once, unconditionally, from App.tsx.
  *
- * Reads/writes the trip store directly via `getState()`/state actions
- * instead of a hook, since this runs outside any React tree.
+ * Delegates to `handleLocationSample`, which reads the active trip id from
+ * MMKV (not this module's own state) so it works correctly even when the OS
+ * spins up a fresh, empty JS context just to deliver this event. This same
+ * subscription runs whether or not a trip is active — see
+ * `useLocationMonitoring` — so each fix might be a recorded trip point or a
+ * driving-detection sample, decided per-sample by `handleLocationSample`.
  */
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
   BACKGROUND_LOCATION_TASK,
@@ -23,15 +27,15 @@ TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
       return;
     }
 
-    const { activeTrip, addPoint } = useTripStore.getState();
-    if (!activeTrip) return;
-
     for (const location of data.locations) {
-      addPoint({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        timestamp: location.timestamp,
-      });
+      handleLocationSample(
+        {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          timestamp: location.timestamp,
+        },
+        location.coords.speed ?? null
+      );
     }
   }
 );

@@ -11,11 +11,13 @@ import {
   useTripStore,
   type Trip,
 } from "@/features/trips";
+import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
 
 function TripRow({ trip, onPress }: { trip: Trip; onPress: () => void }) {
   const theme = useAppTheme();
-  const distance = formatDistance(calculateTripDistanceMeters(trip.points));
+  const unitPreference = useSettingsStore((state) => state.unitPreference);
+  const distance = formatDistance(calculateTripDistanceMeters(trip.points), unitPreference);
 
   return (
     <Pressable onPress={onPress} style={[styles.row, { borderBottomColor: theme.palette.border }]}>

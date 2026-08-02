@@ -2,25 +2,28 @@ import { useEffect, useRef } from "react";
 
 import type { Coordinates } from "@/features/map";
 
-import { useTripStore } from "../store/tripStore";
+import { handleLocationSample } from "../autoDetect";
 
 /**
- * Appends each new location update to the active trip's point list while a
- * trip is being recorded. No-ops when there's no active trip, no location
- * yet, the location hasn't changed since the last recorded point, or
- * `enabled` is false.
+ * Feeds each new foreground location update into `handleLocationSample`,
+ * which records it if a trip is active or runs driving-detection if not.
+ * No-ops when there's no location yet, the location hasn't changed since
+ * the last sample, or `enabled` is false.
  *
- * `enabled` should be set to false whenever the background location task is
- * driving the same trip (see `useBackgroundTripTracking`) — otherwise both
- * this foreground poll and the background task would double-record points.
+ * `enabled` should be set to false whenever the always-on background
+ * location subscription is already covering this (see
+ * `useLocationMonitoring`) — otherwise both this foreground poll and the
+ * background task would double-feed the same fixes.
  */
-export function useTripRecorder(coordinates: Coordinates | null, enabled: boolean = true) {
-  const isRecording = useTripStore((state) => state.activeTrip !== null);
-  const addPoint = useTripStore((state) => state.addPoint);
+export function useTripRecorder(
+  coordinates: Coordinates | null,
+  speedMps: number | null,
+  enabled: boolean = true
+) {
   const lastCoordinatesRef = useRef<Coordinates | null>(null);
 
   useEffect(() => {
-    if (!enabled || !isRecording || !coordinates) return;
+    if (!enabled || !coordinates) return;
 
     const last = lastCoordinatesRef.current;
     if (last && last.latitude === coordinates.latitude && last.longitude === coordinates.longitude) {
@@ -28,6 +31,6 @@ export function useTripRecorder(coordinates: Coordinates | null, enabled: boolea
     }
 
     lastCoordinatesRef.current = coordinates;
-    addPoint({ ...coordinates, timestamp: Date.now() });
-  }, [enabled, isRecording, coordinates, addPoint]);
+    handleLocationSample({ ...coordinates, timestamp: Date.now() }, speedMps);
+  }, [enabled, coordinates, speedMps]);
 }

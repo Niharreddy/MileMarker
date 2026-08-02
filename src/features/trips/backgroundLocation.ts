@@ -6,11 +6,14 @@ import { BACKGROUND_LOCATION_TASK } from "./backgroundLocationTask";
 
 /**
  * Starts the OS-level location subscription backing `BACKGROUND_LOCATION_TASK`.
- * Runs a persistent Android foreground-service notification while active —
- * without it, Android is far more likely to kill the app process (and the
- * task with it) once it's backgrounded for more than a few minutes.
+ * One subscription serves both driving auto-detection and active-trip
+ * recording — see `useLocationMonitoring` for when this runs, and
+ * `handleLocationSample` for how each fix is interpreted. Runs a persistent
+ * Android foreground-service notification while active — without it,
+ * Android is far more likely to kill the app process (and the task with
+ * it) once it's backgrounded for more than a few minutes.
  */
-export async function startBackgroundLocationUpdates() {
+export async function startLocationMonitoring() {
   const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (alreadyStarted) return;
 
@@ -20,13 +23,13 @@ export async function startBackgroundLocationUpdates() {
     distanceInterval: 50,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
-      notificationTitle: "Mile Marker is recording your trip",
-      notificationBody: "Tap to return to the app.",
+      notificationTitle: "Mile Marker",
+      notificationBody: "Watching for drives and tracking any trip in progress.",
     },
   });
 }
 
-export async function stopBackgroundLocationUpdates() {
+export async function stopLocationMonitoring() {
   const isStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (isStarted) {
     await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);

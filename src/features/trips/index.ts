@@ -1,9 +1,12 @@
+export { findGeotaggedPhotosForTrip } from "./autoMatchPhotos";
+export { AutoTripDetection } from "./components/AutoTripDetection";
+export { LifetimeStats } from "./components/LifetimeStats";
 export { SaveTripDialog } from "./components/SaveTripDialog";
 export { TripControls } from "./components/TripControls";
 export { TripRecordingStats } from "./components/TripRecordingStats";
 export { TripSearchBar } from "./components/TripSearchBar";
-export { calculateTripDistanceMeters, formatDistance } from "./distance";
-export { formatTripDuration, formatTripStartedAt } from "./formatters";
+export { calculateTripDistanceMeters, distanceBetweenMeters, formatDistance, nearestDistanceMeters } from "./distance";
+export { formatMinutes, formatTripDuration, formatTripStartedAt } from "./formatters";
 export { useBackgroundTripTracking } from "./hooks/useBackgroundTripTracking";
 export { useTripRecorder } from "./hooks/useTripRecorder";
 export type { SaveTripFormValues } from "./schema";

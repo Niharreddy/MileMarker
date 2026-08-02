@@ -8,7 +8,7 @@ import { spacing, useAppTheme } from "@/theme";
 import { useBackgroundTripTracking } from "../hooks/useBackgroundTripTracking";
 import { useTripStore } from "../store/tripStore";
 
-/** Bottom bar on Home: Start/Stop Trip toggle + a link to the Trips tab. */
+/** Floating Start/Stop Trip + Past Trips buttons, anchored under the map. */
 export function TripControls() {
   const theme = useAppTheme();
   const navigation = useNavigation();
@@ -18,12 +18,7 @@ export function TripControls() {
   const { startTrip, stopTrip } = useBackgroundTripTracking();
 
   return (
-    <View
-      style={[
-        styles.container,
-        { borderTopColor: theme.palette.border, backgroundColor: theme.palette.surface },
-      ]}
-    >
+    <View style={styles.container}>
       {isRecording ? (
         <AppText variant="labelMedium" color="secondary" style={styles.status}>
           {isBackgroundTrackingActive
@@ -31,7 +26,12 @@ export function TripControls() {
             : "Recording — keep the app open to keep tracking."}
         </AppText>
       ) : null}
-      <View style={styles.row}>
+      <View
+        style={[
+          styles.row,
+          { backgroundColor: theme.palette.surface, shadowColor: theme.palette.textPrimary },
+        ]}
+      >
         <AppButton
           label={isRecording ? "Stop Trip" : "Start Trip"}
           variant={isRecording ? "outline" : "primary"}
@@ -52,9 +52,8 @@ export function TripControls() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
   status: {
     marginBottom: spacing.xs,
@@ -62,6 +61,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: spacing.sm,
+    borderRadius: 16,
+    padding: spacing.sm,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
   button: {
     flex: 1,

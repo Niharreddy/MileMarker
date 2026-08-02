@@ -6,6 +6,8 @@ import type { Coordinates } from "../types";
 
 export type CurrentLocationState = {
   coordinates: Coordinates | null;
+  /** Ground speed in meters/second reported by the GPS fix, or null if unavailable. */
+  speedMps: number | null;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -22,6 +24,7 @@ export function useCurrentLocation(
   intervalMs: number = LOCATION_POLL_INTERVAL_MS
 ): CurrentLocationState {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [speedMps, setSpeedMps] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
@@ -44,6 +47,7 @@ export function useCurrentLocation(
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
+        setSpeedMps(position.coords.speed ?? null);
         setError(null);
       }
     } catch (err) {
@@ -63,5 +67,5 @@ export function useCurrentLocation(
     return () => clearInterval(interval);
   }, [enabled, intervalMs, refresh]);
 
-  return { coordinates, isLoading, error, refresh };
+  return { coordinates, speedMps, isLoading, error, refresh };
 }

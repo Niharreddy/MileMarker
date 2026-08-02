@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "scheme": "milemarker",
     "userInterfaceStyle": "automatic",
+    "icon": "./src/assets/images/icon.png",
     "plugins": [
       "expo-dev-client",
       "expo-task-manager",
@@ -34,11 +35,16 @@
       }
     },
     "splash": {
-      "backgroundColor": "#ffffff",
+      "image": "./src/assets/images/splash.png",
+      "backgroundColor": "#FFF8F1",
       "resizeMode": "contain"
     },
     "android": {
       "package": "com.nihar.milemarker",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/adaptive-icon-foreground.png",
+        "backgroundColor": "#D97A56"
+      },
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",

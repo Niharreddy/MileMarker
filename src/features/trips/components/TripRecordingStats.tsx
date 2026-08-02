@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components";
+import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
 
 import { calculateTripDistanceMeters, formatDistance } from "../distance";
+import { formatMinutes } from "../formatters";
 import type { Trip } from "../types";
 
 export type TripRecordingStatsProps = {
@@ -14,6 +16,7 @@ export type TripRecordingStatsProps = {
 /** Live elapsed time / distance / photo count for the trip currently being recorded. */
 export function TripRecordingStats({ trip }: TripRecordingStatsProps) {
   const theme = useAppTheme();
+  const unitPreference = useSettingsStore((state) => state.unitPreference);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -26,8 +29,8 @@ export function TripRecordingStats({ trip }: TripRecordingStatsProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.palette.surfaceVariant }]}>
-      <Stat label="Elapsed" value={elapsedMinutes === 1 ? "1 min" : `${elapsedMinutes} min`} />
-      <Stat label="Distance" value={formatDistance(distanceMeters)} />
+      <Stat label="Elapsed" value={formatMinutes(elapsedMinutes)} />
+      <Stat label="Distance" value={formatDistance(distanceMeters, unitPreference)} />
       <Stat label="Photos" value={String(trip.pins.length)} />
     </View>
   );
