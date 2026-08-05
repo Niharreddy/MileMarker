@@ -24,6 +24,12 @@
           "savePhotosPermission": false,
           "isAccessMediaLocationEnabled": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Mile Marker to use the camera so you can attach a new photo to a trip."
+        }
       ]
     ],
     "ios": {
@@ -57,7 +63,8 @@
         "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_MEDIA_LOCATION"
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.CAMERA"
       ]
     },
     "owner": "gniharreddy0407",

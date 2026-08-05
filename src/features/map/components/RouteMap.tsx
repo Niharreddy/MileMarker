@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import MapLibreGL, {
   Camera,
@@ -36,8 +36,16 @@ export type RouteMapProps = {
 export function RouteMap({ currentLocation, pins, routeCoordinates }: RouteMapProps) {
   const theme = useAppTheme();
   const cameraRef = useRef<CameraRef>(null);
+  // Camera commands issued before the native map has finished loading are
+  // silently dropped, so wait for `onDidFinishLoadingMap` before the first
+  // fit — otherwise a past trip with a route that never changes again (no
+  // re-render to retry on) can get stuck on the default [0, 0] camera,
+  // which renders as a plain blue ocean tile with no route visible.
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
+    if (!isMapReady) return;
+
     if (currentLocation) {
       cameraRef.current?.setCamera({
         centerCoordinate: [currentLocation.longitude, currentLocation.latitude],
@@ -55,11 +63,15 @@ export function RouteMap({ currentLocation, pins, routeCoordinates }: RouteMapPr
       const southWest: [number, number] = [Math.min(...longitudes), Math.min(...latitudes)];
       cameraRef.current?.fitBounds(northEast, southWest, 48, 800);
     }
-  }, [currentLocation, routeCoordinates]);
+  }, [currentLocation, routeCoordinates, isMapReady]);
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} mapStyle={MAP_STYLE_URL}>
+      <MapView
+        style={styles.map}
+        mapStyle={MAP_STYLE_URL}
+        onDidFinishLoadingMap={() => setIsMapReady(true)}
+      >
         <Camera ref={cameraRef} defaultSettings={{ zoomLevel: 12 }} />
 
         {routeCoordinates && routeCoordinates.length > 1 ? (

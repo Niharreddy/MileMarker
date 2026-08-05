@@ -4,6 +4,7 @@ export { PermissionGate } from "./components/PermissionGate";
 export { PhotoPickerSheet } from "./components/PhotoPickerSheet";
 export { RouteMap } from "./components/RouteMap";
 export { useBackgroundLocationPermission } from "./hooks/useBackgroundLocationPermission";
+export { useCameraPermission } from "./hooks/useCameraPermission";
 export { useCurrentLocation } from "./hooks/useCurrentLocation";
 export type { CurrentLocationState } from "./hooks/useCurrentLocation";
 export { useGalleryPermission } from "./hooks/useGalleryPermission";
