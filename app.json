@@ -2,6 +2,7 @@
   "expo": {
     "name": "Mile Marker",
     "slug": "mile-marker",
+    "description": "Private, offline-first trip tracker for recording the roads you drive and attaching photos, notes, and reviews along the way. Everything stays on your device.",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "milemarker",
@@ -30,7 +31,8 @@
         {
           "cameraPermission": "Allow Mile Marker to use the camera so you can attach a new photo to a trip."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "ios": {
       "bundleIdentifier": "com.nihar.milemarker",
@@ -64,7 +66,8 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.ACCESS_MEDIA_LOCATION",
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "owner": "gniharreddy0407",

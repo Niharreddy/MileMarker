@@ -17,6 +17,9 @@ web-build
 *.mobileprovision
 *.orig.*
 
+# Play Console service account credentials (see SUBMIT_SETUP.md)
+google-play-service-account.json
+
 # macOS
 .DS_Store
 

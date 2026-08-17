@@ -41,13 +41,29 @@ export function TripDetailScreen({ route }: Props) {
       </AppText>
 
       <View style={[styles.mapContainer, { borderColor: theme.palette.border }]}>
-        <RouteMap currentLocation={null} pins={trip.pins} routeCoordinates={trip.points} />
+        <RouteMap currentLocation={null} pins={trip.pins} notes={trip.notes} routeCoordinates={trip.points} />
       </View>
 
       <AppText variant="titleSmall" style={styles.sectionTitle}>
         Review
       </AppText>
       <AppText color="secondary">{trip.review.trim() ? trip.review : "No notes for this trip."}</AppText>
+
+      {trip.notes.length > 0 ? (
+        <>
+          <AppText variant="titleSmall" style={styles.sectionTitle}>
+            Notes
+          </AppText>
+          {trip.notes.map((note) => (
+            <View key={note.id} style={styles.noteRow}>
+              <AppText color="secondary" variant="labelSmall">
+                {formatTripStartedAt(note.createdAt)}
+              </AppText>
+              <AppText>{note.text}</AppText>
+            </View>
+          ))}
+        </>
+      ) : null}
 
       <AppText variant="titleSmall" style={styles.sectionTitle}>
         Photos
@@ -83,6 +99,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginTop: spacing.md,
     marginBottom: spacing.xs,
+  },
+  noteRow: {
+    marginBottom: spacing.sm,
   },
   photo: {
     width: 96,

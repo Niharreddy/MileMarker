@@ -1,4 +1,5 @@
 export { LOCATION_POLL_INTERVAL_MS } from "./constants";
+export { AddNoteButton } from "./components/AddNoteButton";
 export { AddPinButton } from "./components/AddPinButton";
 export { PermissionGate } from "./components/PermissionGate";
 export { PhotoPickerSheet } from "./components/PhotoPickerSheet";
@@ -9,5 +10,6 @@ export { useCurrentLocation } from "./hooks/useCurrentLocation";
 export type { CurrentLocationState } from "./hooks/useCurrentLocation";
 export { useGalleryPermission } from "./hooks/useGalleryPermission";
 export { useLocationPermission } from "./hooks/useLocationPermission";
+export { useNotificationPermission } from "./hooks/useNotificationPermission";
 export { usePermission } from "./hooks/usePermission";
-export type { Coordinates, Pin } from "./types";
+export type { Coordinates, Note, Pin } from "./types";

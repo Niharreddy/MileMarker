@@ -1,7 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { TripDetailScreen } from "@/screens/TripDetail";
+import { TripDetailScreen, TripOptionsMenu } from "@/screens/TripDetail";
 
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import type { RootStackParamList } from "./types";
@@ -23,7 +23,10 @@ export function RootStack() {
       <Stack.Screen
         name="TripDetail"
         component={TripDetailScreen}
-        options={{ title: "Trip" }}
+        options={({ navigation, route }) => ({
+          title: "Trip",
+          headerRight: () => <TripOptionsMenu tripId={route.params.tripId} navigation={navigation} />,
+        })}
       />
     </Stack.Navigator>
   );

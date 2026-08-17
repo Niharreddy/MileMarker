@@ -4,7 +4,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { PermissionStatus } from "expo-modules-core";
 
 import { AppButton, AppText, LoadingIndicator, ScreenContainer } from "@/components";
-import { useBackgroundLocationPermission, useGalleryPermission, useLocationPermission } from "@/features/map";
+import {
+  useBackgroundLocationPermission,
+  useGalleryPermission,
+  useLocationPermission,
+  useNotificationPermission,
+} from "@/features/map";
 import { spacing, useAppTheme } from "@/theme";
 
 export type PermissionsPrimingScreenProps = {
@@ -24,15 +29,20 @@ export function PermissionsPrimingScreen({ onDone }: PermissionsPrimingScreenPro
   const locationPermission = useLocationPermission();
   const backgroundPermission = useBackgroundLocationPermission();
   const galleryPermission = useGalleryPermission();
+  const notificationPermission = useNotificationPermission();
   const [isRequesting, setIsRequesting] = useState(false);
 
   const isChecking =
-    locationPermission.isChecking || backgroundPermission.isChecking || galleryPermission.isChecking;
+    locationPermission.isChecking ||
+    backgroundPermission.isChecking ||
+    galleryPermission.isChecking ||
+    notificationPermission.isChecking;
 
   const allDetermined =
     locationPermission.status !== PermissionStatus.UNDETERMINED &&
     backgroundPermission.status !== PermissionStatus.UNDETERMINED &&
-    galleryPermission.status !== PermissionStatus.UNDETERMINED;
+    galleryPermission.status !== PermissionStatus.UNDETERMINED &&
+    notificationPermission.status !== PermissionStatus.UNDETERMINED;
 
   useEffect(() => {
     if (!isChecking && allDetermined) {
@@ -56,6 +66,7 @@ export function PermissionsPrimingScreen({ onDone }: PermissionsPrimingScreenPro
       await backgroundPermission.request();
     }
     await galleryPermission.request();
+    await notificationPermission.request();
     setIsRequesting(false);
     onDone();
   };
@@ -85,6 +96,11 @@ export function PermissionsPrimingScreen({ onDone }: PermissionsPrimingScreenPro
           icon="image-multiple-outline"
           title="Photos"
           description="To find photos taken along your route and attach them automatically."
+        />
+        <PermissionRow
+          icon="bell-outline"
+          title="Notifications"
+          description="To alert you when a trip is auto-detected or you've been stopped a while."
         />
       </View>
 

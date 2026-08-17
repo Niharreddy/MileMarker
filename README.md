@@ -28,19 +28,26 @@ attaching memories, notes, ratings, and photos to places along the way.
   route points, and photo pins durably on-device. The active trip id is also
   kept in MMKV so the background location task can write points straight to
   SQLite even when the OS relaunches a fresh, empty JS context to deliver an
-  update. If the app process is killed mid-recording, the unfinished trip is
-  recovered on next launch and surfaced for you to name/save rather than
-  lost or silently resumed.
+  update. If the app process is killed mid-recording — or auto-detect starts
+  a trip from a headless JS context while the app is closed — the unfinished
+  trip resumes as the active trip on next launch (Stop Trip still works
+  normally), instead of forcing a save/discard prompt on a trip the user
+  never actually stopped.
 - **Trips**: manual Start/Stop recording, plus automatic driving detection —
   an always-on background location subscription (when permission is granted
   and the Settings toggle is on) watches for sustained driving speed
   (~10 mph) and auto-starts a trip with a "Trip detected" popup, without
   triggering on walking. If a trip sits stationary for ~10 minutes, a popup
   asks whether to stop tracking instead of silently splitting the trip at
-  every stop (e.g. a scenic viewpoint). Live distance/duration/photo-count
+  every stop (e.g. a scenic viewpoint). Both moments also fire a real OS
+  notification (not just the in-app popup), so they're noticed even while
+  the app is backgrounded or the screen is off — requires notification
+  permission, asked for on the permissions-priming screen. Live distance/duration/photo-count
   stats while recording, name + review form on stop (React Hook Form + Zod),
   search by name, and a detail screen with the route map, review, and
-  photos. Distance is shown in miles or kilometers per the Settings toggle,
+  photos — a "..." menu in that screen's header lets you permanently delete
+  the trip (route, photos, and notes) with a confirmation prompt first.
+  Distance is shown in miles or kilometers per the Settings toggle,
   auto-switching units as the number grows (ft→mi, m→km). Home also shows
   lifetime totals (trip count, total distance, total "memories" = photos +
   trips with a written review).
@@ -48,7 +55,20 @@ attaching memories, notes, ratings, and photos to places along the way.
   "Take Photo" option at the top to shoot and attach a new photo on the
   spot, plus automatic geotag matching — after Stop Trip, gallery photos
   taken during the trip within ~150m of the recorded route are attached
-  automatically (silently no-ops without gallery permission).
+  automatically (silently no-ops without gallery permission). Every pin
+  photo (gallery, camera, or auto-matched) is copied into app-owned
+  storage the moment it's attached, so it survives the original being
+  deleted from your gallery — this is also what makes export/import work.
+- **Mid-trip comments**: a second floating button next to the photo picker,
+  visible whenever a trip is recording — drop a timestamped, geotagged
+  comment at any point along the route (not just the single end-of-trip
+  review). Comments show as tappable markers on the map and in a "Notes"
+  section on the trip detail screen.
+- **Export / Import**: Settings → Export Data serializes every past trip —
+  routes, photos, notes, and reviews — into a single JSON file (photos
+  embedded as base64) and hands it to the OS share sheet to save or send
+  anywhere. Import picks a file back in, skipping any trip whose id
+  already exists locally so re-importing the same file is a no-op.
 - **Memories**: every photo pinned across every trip, flattened into one
   newest-first grid on the Memories tab; tapping a photo opens that trip's
   detail screen.
@@ -97,6 +117,14 @@ npx eas-cli build --profile preview --platform android
   access. Turn auto-detect off in Settings to fall back to tracking only
   while a manually-started trip is active.
 - Map tiles need connectivity; GPS recording itself doesn't.
+
+## Store submission
+
+See `SUBMIT_SETUP.md` for wiring up EAS submit credentials, and
+`STORE_CHECKLIST.md` for the full manual checklist (accounts, privacy
+policy hosting, screenshots, background-location declaration). Draft
+listing copy is in `STORE_LISTING.md`, draft privacy policy in
+`PRIVACY.md`.
 
 ## Next up
 

@@ -1,7 +1,8 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { AppButton, AppHeader, AppText, ScreenContainer } from "@/components";
+import { exportAllData, importDataFromFile } from "@/features/trips";
 import { useSettingsStore, type ThemePreference, type UnitPreference } from "@/store";
 import { spacing } from "@/theme";
 
@@ -34,6 +35,33 @@ export function SettingsScreen() {
   const setUnitPreference = useSettingsStore((state) => state.setUnitPreference);
   const autoDetectDrivingEnabled = useSettingsStore((state) => state.autoDetectDrivingEnabled);
   const setAutoDetectDrivingEnabled = useSettingsStore((state) => state.setAutoDetectDrivingEnabled);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportAllData();
+    } catch (err) {
+      Alert.alert("Export failed", err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    setIsImporting(true);
+    try {
+      const { importedCount } = await importDataFromFile();
+      if (importedCount > 0) {
+        Alert.alert("Import complete", `Added ${importedCount} trip${importedCount === 1 ? "" : "s"}.`);
+      }
+    } catch (err) {
+      Alert.alert("Import failed", err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   return (
     <ScreenContainer>
@@ -86,6 +114,30 @@ export function SettingsScreen() {
             style={styles.optionButton}
           />
         ))}
+      </View>
+
+      <AppText variant="titleSmall" color="secondary" style={[styles.sectionLabel, styles.sectionSpacing]}>
+        Data
+      </AppText>
+      <AppText color="secondary" style={styles.helperText}>
+        Export every trip — routes, photos, and notes — to a file you can back up or move to another
+        device, or import one back in.
+      </AppText>
+      <View style={styles.optionRow}>
+        <AppButton
+          label="Export Data"
+          variant="outline"
+          loading={isExporting}
+          onPress={handleExport}
+          style={styles.optionButton}
+        />
+        <AppButton
+          label="Import Data"
+          variant="outline"
+          loading={isImporting}
+          onPress={handleImport}
+          style={styles.optionButton}
+        />
       </View>
     </ScreenContainer>
   );

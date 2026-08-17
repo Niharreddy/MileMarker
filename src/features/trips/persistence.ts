@@ -2,9 +2,11 @@ import type { Pin } from "@/features/map";
 import {
   deleteTripRow,
   getAllTripRows,
+  getTripNoteRows,
   getTripPinRows,
   getTripPointRows,
   initDatabase,
+  insertTripNoteRow,
   insertTripPinRow,
   insertTripPointRow,
   insertTripRow,
@@ -12,7 +14,7 @@ import {
   updateTripEndedAtRow,
 } from "@/services/db";
 
-import type { Trip, TripPoint } from "./types";
+import type { Trip, TripNote, TripPoint } from "./types";
 
 /** Maps between the generic DB row shapes in `services/db` and this feature's `Trip` domain type. */
 
@@ -44,6 +46,10 @@ export function persistTripPin(tripId: string, pin: Pin) {
   insertTripPinRow(pin.id, tripId, pin.uri, pin.coordinates.latitude, pin.coordinates.longitude, pin.createdAt);
 }
 
+export function persistTripNote(tripId: string, note: TripNote) {
+  insertTripNoteRow(note.id, tripId, note.text, note.coordinates.latitude, note.coordinates.longitude, note.createdAt);
+}
+
 export function loadAllTrips(): Trip[] {
   return getAllTripRows().map((row) => ({
     id: row.id,
@@ -61,6 +67,12 @@ export function loadAllTrips(): Trip[] {
       uri: pin.uri,
       coordinates: { latitude: pin.latitude, longitude: pin.longitude },
       createdAt: pin.created_at,
+    })),
+    notes: getTripNoteRows(row.id).map((note) => ({
+      id: note.id,
+      text: note.text,
+      coordinates: { latitude: note.latitude, longitude: note.longitude },
+      createdAt: note.created_at,
     })),
   }));
 }

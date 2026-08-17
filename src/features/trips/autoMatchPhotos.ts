@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import type { Pin } from "@/features/map";
 
 import { nearestDistanceMeters } from "./distance";
+import { persistPinPhoto } from "./photoStorage";
 import type { Trip } from "./types";
 
 /** How close a photo's EXIF location must be to any recorded point to count as "on the route". */
@@ -46,9 +47,11 @@ export async function findGeotaggedPhotosForTrip(trip: Trip): Promise<Pin[]> {
     );
     if (distance > MATCH_RADIUS_METERS) continue;
 
+    const id = uuid();
+    const persistedUri = await persistPinPhoto(asset.uri, id);
     matches.push({
-      id: uuid(),
-      uri: asset.uri,
+      id,
+      uri: persistedUri,
       coordinates: { latitude: location.latitude, longitude: location.longitude },
       createdAt: asset.creationTime,
     });

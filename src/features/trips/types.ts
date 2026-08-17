@@ -1,6 +1,8 @@
-import type { Coordinates, Pin } from "@/features/map";
+import type { Coordinates, Note, Pin } from "@/features/map";
 
 export type TripPoint = Coordinates & { timestamp: number };
+
+export type TripNote = Note;
 
 export type Trip = {
   id: string;
@@ -10,4 +12,5 @@ export type Trip = {
   endedAt: number | null;
   points: TripPoint[];
   pins: Pin[];
+  notes: TripNote[];
 };

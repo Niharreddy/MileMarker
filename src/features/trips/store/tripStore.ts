@@ -12,9 +12,11 @@ import {
   persistTripDeleted,
   persistTripDetails,
   persistTripEnded,
+  persistTripNote,
   persistTripPin,
 } from "../persistence";
-import type { Trip } from "../types";
+import { deletePinPhoto } from "../photoStorage";
+import type { Trip, TripNote } from "../types";
 
 export type TripState = {
   /** The trip currently being recorded. */
@@ -29,9 +31,18 @@ export type TripState = {
   stopTrip: () => void;
   saveTrip: (details: { name: string; review: string }) => void;
   discardPendingTrip: () => void;
+  deleteTrip: (id: string) => void;
   addPinToActiveTrip: (pin: Pin) => void;
   /** Bulk-adds pins to the just-stopped pending trip — used by geotag auto-matching after Stop Trip. */
   addPinsToPendingTrip: (pins: Pin[]) => void;
+  addNoteToActiveTrip: (note: TripNote) => void;
+  /**
+   * Re-reads every trip from SQLite, including whichever trip (if any) is
+   * still unfinished — used after importing data, and to pull in a trip
+   * that auto-detect started from a headless JS context this store's
+   * in-memory state never observed directly.
+   */
+  reloadFromDatabase: () => void;
   /** Whether to show the "trip detected" popup — set by auto-detect via MMKV, synced in by `useAutoDetectNotices`. */
   autoStartNoticeVisible: boolean;
   /** Whether to show the "you've been stopped a while" popup. */
@@ -68,7 +79,7 @@ export const useTripStore = create<TripState>()((set, get) => ({
     persistNewTrip(id, startedAt);
     appStorage.set(StorageKeys.activeTripId, id);
     set({
-      activeTrip: { id, name: "", review: "", startedAt, endedAt: null, points: [], pins: [] },
+      activeTrip: { id, name: "", review: "", startedAt, endedAt: null, points: [], pins: [], notes: [] },
     });
   },
 
@@ -100,6 +111,15 @@ export const useTripStore = create<TripState>()((set, get) => ({
     set({ pendingTrip: null });
   },
 
+  deleteTrip: (id) => {
+    const { pastTrips } = get();
+    const trip = pastTrips.find((candidate) => candidate.id === id);
+    if (!trip) return;
+    persistTripDeleted(id);
+    set({ pastTrips: pastTrips.filter((candidate) => candidate.id !== id) });
+    for (const pin of trip.pins) void deletePinPhoto(pin.uri);
+  },
+
   addPinToActiveTrip: (pin) => {
     const { activeTrip } = get();
     if (!activeTrip) return;
@@ -114,12 +134,39 @@ export const useTripStore = create<TripState>()((set, get) => ({
     set({ pendingTrip: { ...pendingTrip, pins: [...pendingTrip.pins, ...pins] } });
   },
 
+  addNoteToActiveTrip: (note) => {
+    const { activeTrip } = get();
+    if (!activeTrip) return;
+    persistTripNote(activeTrip.id, note);
+    set({ activeTrip: { ...activeTrip, notes: [...activeTrip.notes, note] } });
+  },
+
+  reloadFromDatabase: () => {
+    const trips = loadAllTrips();
+    const activeRow = trips.find((trip) => trip.endedAt === null) ?? null;
+    if (activeRow) appStorage.set(StorageKeys.activeTripId, activeRow.id);
+    set({
+      activeTrip: activeRow,
+      pastTrips: trips.filter((trip) => trip.endedAt !== null),
+    });
+  },
+
   autoStartNoticeVisible: false,
   stopPromptVisible: false,
 
   syncAutoDetectNotices: () => {
     const autoStartPending = appStorage.getBoolean(StorageKeys.autoStartNoticePending) ?? false;
     const stopPending = appStorage.getBoolean(StorageKeys.stopPromptPending) ?? false;
+
+    // Auto-detect can start/record a trip from a headless JS context this
+    // store never saw directly — catch up here whenever what MMKV says is
+    // active disagrees with what's in memory (e.g. after the app is
+    // reopened via the "Trip detected" notification).
+    const storedActiveTripId = appStorage.getString(StorageKeys.activeTripId) ?? null;
+    if (storedActiveTripId && storedActiveTripId !== get().activeTrip?.id) {
+      get().reloadFromDatabase();
+    }
+
     if (!autoStartPending && !stopPending) return;
     set((state) => ({
       autoStartNoticeVisible: state.autoStartNoticeVisible || autoStartPending,
@@ -146,25 +193,31 @@ export const useTripStore = create<TripState>()((set, get) => ({
 
 /**
  * Runs once at module load (i.e. app startup): initializes the SQLite
- * schema, loads completed trips, and recovers any trip that was still
- * "active" (no `ended_at`) when the process last died — background
- * recording writes points straight to SQLite regardless of whether this
- * store is warm, so that data isn't lost, it just needs a name/review like
- * any other stopped trip.
+ * schema, loads completed trips, and resumes any trip that was still
+ * "active" (no `ended_at`) — whether because the app process was killed
+ * mid-recording, or because auto-detect started it from a headless JS
+ * context between launches. Either way the trip is still genuinely being
+ * tracked (background recording writes points straight to SQLite
+ * regardless of whether this store is warm), so it comes back as
+ * `activeTrip` with a working Stop Trip button, not as a forced
+ * name/save prompt.
  */
 function hydrateTripStore() {
   initTripDatabase();
   const trips = loadAllTrips();
-  const orphanedTrip = trips.find((trip) => trip.endedAt === null) ?? null;
+  const activeRow = trips.find((trip) => trip.endedAt === null) ?? null;
   const completedTrips = trips.filter((trip) => trip.endedAt !== null);
 
-  if (orphanedTrip) {
+  if (activeRow) {
+    appStorage.set(StorageKeys.activeTripId, activeRow.id);
+  } else {
     appStorage.delete(StorageKeys.activeTripId);
   }
 
   useTripStore.setState({
+    activeTrip: activeRow,
     pastTrips: completedTrips,
-    pendingTrip: orphanedTrip ? { ...orphanedTrip, endedAt: orphanedTrip.endedAt ?? Date.now() } : null,
+    pendingTrip: null,
   });
 }
 

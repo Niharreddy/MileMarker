@@ -3,6 +3,7 @@ import { appStorage } from "@/services/storage";
 import { useSettingsStore } from "@/store";
 
 import { distanceBetweenMeters } from "./distance";
+import { notifyStopPrompt, notifyTripAutoStarted } from "./notifications";
 import { recordTripPoint } from "./recordTripPoint";
 import { useTripStore } from "./store/tripStore";
 import type { TripPoint } from "./types";
@@ -43,6 +44,7 @@ function estimateSpeedMps(sample: TripPoint, reportedSpeedMps: number | null): n
 
 function updateDrivingDetection(sample: TripPoint, reportedSpeedMps: number | null) {
   const speedMps = estimateSpeedMps(sample, reportedSpeedMps);
+  const previousSample = readLastSample();
   writeLastSample(sample);
 
   if (!useSettingsStore.getState().autoDetectDrivingEnabled) {
@@ -64,7 +66,13 @@ function updateDrivingDetection(sample: TripPoint, reportedSpeedMps: number | nu
 
   appStorage.set(StorageKeys.autoDetectConsecutiveDriving, 0);
   useTripStore.getState().startTrip();
+  // Back-fill the sample that first crossed the driving threshold (not just
+  // the one that confirmed it), so the recorded route starts from where the
+  // movement was actually detected instead of a beat late.
+  if (previousSample) recordTripPoint(previousSample);
+  recordTripPoint(sample);
   appStorage.set(StorageKeys.autoStartNoticePending, true);
+  void notifyTripAutoStarted();
 }
 
 function updateStopDetection(sample: TripPoint, reportedSpeedMps: number | null) {
@@ -85,7 +93,9 @@ function updateStopDetection(sample: TripPoint, reportedSpeedMps: number | null)
 
   const stoppedMinutes = (sample.timestamp - Number(stoppedSinceRaw)) / 60_000;
   if (stoppedMinutes >= STOP_PROMPT_MINUTES) {
+    const alreadyPending = appStorage.getBoolean(StorageKeys.stopPromptPending) ?? false;
     appStorage.set(StorageKeys.stopPromptPending, true);
+    if (!alreadyPending) void notifyStopPrompt();
   }
 }
 

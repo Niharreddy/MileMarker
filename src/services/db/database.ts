@@ -39,8 +39,19 @@ export function initDatabase() {
       FOREIGN KEY (trip_id) REFERENCES trips(id)
     );
 
+    CREATE TABLE IF NOT EXISTS trip_notes (
+      id TEXT PRIMARY KEY,
+      trip_id TEXT NOT NULL,
+      text TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (trip_id) REFERENCES trips(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_trip_points_trip ON trip_points(trip_id);
     CREATE INDEX IF NOT EXISTS idx_trip_pins_trip ON trip_pins(trip_id);
+    CREATE INDEX IF NOT EXISTS idx_trip_notes_trip ON trip_notes(trip_id);
   `);
 }
 
@@ -68,6 +79,15 @@ export type TripPinRow = {
   created_at: number;
 };
 
+export type TripNoteRow = {
+  id: string;
+  trip_id: string;
+  text: string;
+  latitude: number;
+  longitude: number;
+  created_at: number;
+};
+
 export function insertTripRow(id: string, startedAt: number) {
   db.runSync(`INSERT INTO trips (id, started_at) VALUES (?, ?)`, [id, startedAt]);
 }
@@ -83,6 +103,7 @@ export function updateTripEndedAtRow(id: string, endedAt: number) {
 export function deleteTripRow(id: string) {
   db.runSync(`DELETE FROM trip_points WHERE trip_id = ?`, [id]);
   db.runSync(`DELETE FROM trip_pins WHERE trip_id = ?`, [id]);
+  db.runSync(`DELETE FROM trip_notes WHERE trip_id = ?`, [id]);
   db.runSync(`DELETE FROM trips WHERE id = ?`, [id]);
 }
 
@@ -126,6 +147,27 @@ export function getTripPointRows(tripId: string): TripPointRow[] {
 export function getTripPinRows(tripId: string): TripPinRow[] {
   return db.getAllSync<TripPinRow>(
     `SELECT * FROM trip_pins WHERE trip_id = ? ORDER BY created_at ASC`,
+    [tripId]
+  );
+}
+
+export function insertTripNoteRow(
+  id: string,
+  tripId: string,
+  text: string,
+  latitude: number,
+  longitude: number,
+  createdAt: number
+) {
+  db.runSync(
+    `INSERT INTO trip_notes (id, trip_id, text, latitude, longitude, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, tripId, text, latitude, longitude, createdAt]
+  );
+}
+
+export function getTripNoteRows(tripId: string): TripNoteRow[] {
+  return db.getAllSync<TripNoteRow>(
+    `SELECT * FROM trip_notes WHERE trip_id = ? ORDER BY created_at ASC`,
     [tripId]
   );
 }

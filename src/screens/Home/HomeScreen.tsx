@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 
 import { AppHeader, LoadingIndicator, ScreenContainer } from "@/components";
 import {
+  AddNoteButton,
   AddPinButton,
   PermissionGate,
   RouteMap,
@@ -12,6 +13,7 @@ import {
 } from "@/features/map";
 import {
   LifetimeStats,
+  persistPinPhoto,
   SaveTripDialog,
   TripControls,
   TripRecordingStats,
@@ -28,6 +30,7 @@ export function HomeScreen() {
 
   const activeTrip = useTripStore((state) => state.activeTrip);
   const addPinToActiveTrip = useTripStore((state) => state.addPinToActiveTrip);
+  const addNoteToActiveTrip = useTripStore((state) => state.addNoteToActiveTrip);
   const isBackgroundTrackingActive = useTripStore((state) => state.isBackgroundTrackingActive);
   // The always-on background subscription already covers this — don't double-feed samples.
   useTripRecorder(coordinates, speedMps, !isBackgroundTrackingActive);
@@ -64,16 +67,28 @@ export function HomeScreen() {
         <RouteMap
           currentLocation={coordinates}
           pins={activeTrip?.pins ?? []}
+          notes={activeTrip?.notes ?? []}
           routeCoordinates={activeTrip?.points}
         />
         {activeTrip ? (
-          <AddPinButton
-            disabled={!coordinates}
-            onPickPhoto={(uri) => {
-              if (!coordinates) return;
-              addPinToActiveTrip({ id: uuid(), uri, coordinates, createdAt: Date.now() });
-            }}
-          />
+          <>
+            <AddPinButton
+              disabled={!coordinates}
+              onPickPhoto={async (uri) => {
+                if (!coordinates) return;
+                const id = uuid();
+                const persistedUri = await persistPinPhoto(uri, id);
+                addPinToActiveTrip({ id, uri: persistedUri, coordinates, createdAt: Date.now() });
+              }}
+            />
+            <AddNoteButton
+              disabled={!coordinates}
+              onSubmitNote={(text) => {
+                if (!coordinates) return;
+                addNoteToActiveTrip({ id: uuid(), text, coordinates, createdAt: Date.now() });
+              }}
+            />
+          </>
         ) : null}
       </View>
 

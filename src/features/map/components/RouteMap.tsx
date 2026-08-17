@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, Modal, StyleSheet, View } from "react-native";
 import MapLibreGL, {
   Camera,
   LineLayer,
@@ -8,10 +8,21 @@ import MapLibreGL, {
   ShapeSource,
   type CameraRef,
 } from "@maplibre/maplibre-react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { useAppTheme } from "@/theme";
+import { AppButton, AppText } from "@/components";
+import { spacing, useAppTheme } from "@/theme";
 
-import type { Coordinates, Pin } from "../types";
+import type { Coordinates, Note, Pin } from "../types";
+
+function formatNoteTimestamp(createdAt: number) {
+  return new Date(createdAt).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 MapLibreGL.setAccessToken(null);
 // Tile requests routinely get cancelled when the camera re-centers or the
@@ -29,13 +40,15 @@ const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 export type RouteMapProps = {
   currentLocation: Coordinates | null;
   pins: Pin[];
+  notes?: Note[];
   /** The active trip's recorded path, drawn as a line if it has 2+ points. */
   routeCoordinates?: Coordinates[];
 };
 
-export function RouteMap({ currentLocation, pins, routeCoordinates }: RouteMapProps) {
+export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates }: RouteMapProps) {
   const theme = useAppTheme();
   const cameraRef = useRef<CameraRef>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   // Camera commands issued before the native map has finished loading are
   // silently dropped, so wait for `onDidFinishLoadingMap` before the first
   // fit — otherwise a past trip with a route that never changes again (no
@@ -118,7 +131,37 @@ export function RouteMap({ currentLocation, pins, routeCoordinates }: RouteMapPr
             </View>
           </PointAnnotation>
         ))}
+
+        {notes.map((note) => (
+          <PointAnnotation
+            key={note.id}
+            id={note.id}
+            coordinate={[note.coordinates.longitude, note.coordinates.latitude]}
+            onSelected={() => setSelectedNote(note)}
+          >
+            <View
+              style={[
+                styles.notePin,
+                { backgroundColor: theme.palette.success, borderColor: theme.palette.onPrimary },
+              ]}
+            >
+              <MaterialCommunityIcons name="comment-text-outline" size={18} color={theme.palette.onPrimary} />
+            </View>
+          </PointAnnotation>
+        ))}
       </MapView>
+
+      <Modal visible={!!selectedNote} transparent animationType="fade" onRequestClose={() => setSelectedNote(null)}>
+        <View style={styles.noteBackdrop}>
+          <View style={[styles.noteCard, { backgroundColor: theme.palette.surface }]}>
+            <AppText color="secondary" variant="labelSmall" style={styles.noteTimestamp}>
+              {selectedNote ? formatNoteTimestamp(selectedNote.createdAt) : ""}
+            </AppText>
+            <AppText style={styles.noteText}>{selectedNote?.text}</AppText>
+            <AppButton label="Close" variant="text" onPress={() => setSelectedNote(null)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -142,5 +185,31 @@ const styles = StyleSheet.create({
   pinImage: {
     width: "100%",
     height: "100%",
+  },
+  notePin: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noteBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.lg,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  noteCard: {
+    width: "100%",
+    borderRadius: 16,
+    padding: spacing.lg,
+  },
+  noteTimestamp: {
+    marginBottom: spacing.xs,
+  },
+  noteText: {
+    marginBottom: spacing.md,
   },
 });
