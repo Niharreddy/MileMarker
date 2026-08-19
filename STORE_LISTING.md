@@ -46,5 +46,5 @@ route tracker, photo journal, driving log, offline maps
 
 ## Promotional text / What's new (first release)
 
-> Mile Marker 0.1 — private, offline trip tracking with photo pins,
+> Mile Marker 1.0 — private, offline trip tracking with photo pins,
 > mid-trip notes, auto-detected drives, and full data export/import.

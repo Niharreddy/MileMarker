@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AppButton, AppText } from "@/components";
+import { AppText } from "@/components";
 import { getRandomQuote } from "@/constants/quotes";
 import { spacing, useAppTheme } from "@/theme";
+
+/** How long the welcome screen stays up before auto-advancing — long enough to read the headline + quote. */
+const AUTO_ADVANCE_MS = 2800;
 
 export type WelcomeScreenProps = {
   onGetStarted: () => void;
@@ -13,12 +16,18 @@ export type WelcomeScreenProps = {
 /**
  * Always shown before the main tab navigator (see `RootNavigator`) — not
  * gated by a "seen it once" flag, so it's a deliberate re-entry moment
- * every launch rather than a one-time onboarding step.
+ * every launch rather than a one-time onboarding step. Auto-advances after
+ * a fixed delay instead of waiting for a tap, so it reads as a beat, not a gate.
  */
 export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
   const theme = useAppTheme();
   // Picked once per mount (i.e. once per app launch), not per render.
   const [quote] = useState(getRandomQuote);
+
+  useEffect(() => {
+    const timer = setTimeout(onGetStarted, AUTO_ADVANCE_MS);
+    return () => clearTimeout(timer);
+  }, [onGetStarted]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.palette.background }]}>
@@ -47,8 +56,6 @@ export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
           </AppText>
         </View>
       </View>
-
-      <AppButton label="Get Started" onPress={onGetStarted} style={styles.button} />
     </View>
   );
 }
@@ -56,9 +63,7 @@ export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between",
     padding: spacing.xl,
-    paddingBottom: spacing.xxl,
   },
   content: {
     flex: 1,
@@ -83,8 +88,5 @@ const styles = StyleSheet.create({
   quoteText: {
     textAlign: "center",
     fontStyle: "italic",
-  },
-  button: {
-    alignSelf: "stretch",
   },
 });

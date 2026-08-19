@@ -3,7 +3,7 @@
     "name": "Mile Marker",
     "slug": "mile-marker",
     "description": "Private, offline-first trip tracker for recording the roads you drive and attaching photos, notes, and reviews along the way. Everything stays on your device.",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "milemarker",
     "userInterfaceStyle": "automatic",

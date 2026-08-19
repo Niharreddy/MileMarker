@@ -1,6 +1,6 @@
 # Mile Marker Privacy Policy
 
-_Last updated: [fill in date before publishing]_
+_Last updated: 20 Aug 2026_
 
 Mile Marker is a private, offline-first trip-tracking app. This policy
 covers what the app accesses, what it stores, and — most importantly —
@@ -51,5 +51,4 @@ retrying. Deleting the app deletes all of its local data.
 
 ## Contact
 
-[fill in your contact email before publishing — both Play Console and
-App Store Connect require one]
+milemarker.dev@gmail.com

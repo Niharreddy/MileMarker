@@ -25,3 +25,5 @@ google-play-service-account.json
 
 # Local env
 .env*.local
+
+.claude
