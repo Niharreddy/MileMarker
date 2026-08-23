@@ -3,107 +3,355 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Mile Marker Privacy Policy</title>
+<title>Mile Marker — Your private travel journal</title>
+<meta name="description" content="Mile Marker is a private, offline-first travel journal. Record every road you drive, pin photos and notes along the way, and keep it all on your device — no account, no ads, no tracking." />
+<link rel="icon" href="assets/icon.png" />
 <style>
   :root {
     color-scheme: light dark;
     --bg: #FFF8F1;
+    --bg-alt: #FBF0E4;
     --text: #2B2118;
     --text-secondary: #6B5C4C;
     --accent: #D97A56;
+    --accent-strong: #C1613D;
     --border: #E6D9C8;
+    --card-bg: #FFFFFF;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #1C1712;
+      --bg-alt: #221C15;
       --text: #F2E9DD;
       --text-secondary: #B9A98F;
       --accent: #E39A76;
+      --accent-strong: #EEB08D;
       --border: #3A2F24;
+      --card-bg: #241E17;
     }
   }
+  * { box-sizing: border-box; }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
-    max-width: 720px;
+    margin: 0;
+  }
+  a { color: var(--accent-strong); }
+  .wrap {
+    max-width: 1040px;
     margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
+    padding: 0 1.5rem;
   }
-  h1 {
-    margin-bottom: 0.25rem;
-  }
-  .updated {
-    color: var(--text-secondary);
-    font-style: italic;
-    margin-bottom: 2rem;
-  }
-  h2 {
-    margin-top: 2.25rem;
+
+  header.nav {
+    padding: 1.25rem 0;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0.35rem;
   }
-  ul {
-    padding-left: 1.25rem;
+  header.nav .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  li {
-    margin-bottom: 0.6rem;
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    color: var(--text);
   }
-  a {
-    color: var(--accent);
+  .brand img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
   }
+  nav.links {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.95rem;
+  }
+  nav.links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+  }
+  nav.links a:hover { color: var(--accent-strong); }
+
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    text-align: center;
+  }
+  .hero img.icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+    box-shadow: 0 12px 30px -12px rgba(0,0,0,0.35);
+    margin-bottom: 1.75rem;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.02em;
+  }
+  .hero p.sub {
+    color: var(--text-secondary);
+    font-size: 1.15rem;
+    max-width: 560px;
+    margin: 0 auto 2rem;
+  }
+  .cta-row {
+    display: flex;
+    gap: 0.9rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .btn.primary {
+    background: var(--accent);
+    color: #1C1712;
+  }
+  .btn.ghost {
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .pill-note {
+    margin-top: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  section.tagline-strip {
+    background: var(--bg-alt);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1.1rem 0;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+  section.tagline-strip strong { color: var(--text); }
+
+  section.features {
+    padding: 4rem 0;
+  }
+  section.features h2 {
+    text-align: center;
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+  }
+  section.features p.lead {
+    text-align: center;
+    color: var(--text-secondary);
+    max-width: 560px;
+    margin: 0 auto 3rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+  .card .emoji {
+    font-size: 1.6rem;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .card h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+  }
+  .card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+  }
+
+  section.privacy-callout {
+    padding: 4rem 0;
+    background: var(--bg-alt);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .privacy-callout .wrap {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+  .privacy-callout .copy { flex: 1 1 320px; }
+  .privacy-callout h2 {
+    font-size: 1.7rem;
+    margin: 0 0 0.75rem;
+  }
+  .privacy-callout p {
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+  }
+  .privacy-callout ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+  .privacy-callout li { margin-bottom: 0.4rem; }
+  .badge-stack {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .badge {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.8rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 220px;
+  }
+
+  footer {
+    padding: 3rem 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+  }
+  footer .links {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  footer a { color: var(--text-secondary); text-decoration: none; }
+  footer a:hover { color: var(--accent-strong); }
 </style>
 </head>
 <body>
-  <h1>Mile Marker Privacy Policy</h1>
-  <p class="updated">Last updated: 20 Aug 2026</p>
 
-  <p>Mile Marker is a private, offline-first trip-tracking app. This policy
-  covers what the app accesses, what it stores, and — most importantly —
-  what it does <strong>not</strong> do with any of it.</p>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img src="assets/icon.png" alt="Mile Marker icon" />
+      Mile Marker
+    </a>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="privacy.html">Privacy Policy</a>
+    </nav>
+  </div>
+</header>
 
-  <h2>What Mile Marker collects</h2>
-  <ul>
-    <li><strong>Location.</strong> Mile Marker uses your device's GPS to draw the route of
-    trips you record, to auto-detect when you start driving, and to place
-    photo pins and comments at the right spot on the map. This includes
-    background location access, used only while a trip is being recorded or
-    while automatic driving-detection is turned on in Settings — never
-    collected for any other purpose.</li>
-    <li><strong>Photos.</strong> If you attach a photo to a trip (from your camera or photo
-    library), Mile Marker stores a copy of that photo on your device so it's
-    attached to that trip permanently, even if the original is later deleted
-    from your photo library.</li>
-    <li><strong>Notes and reviews.</strong> Any trip name, end-of-trip review, or mid-trip
-    comment you write is stored with that trip.</li>
-  </ul>
+<section class="hero" id="top">
+  <div class="wrap">
+    <img class="icon" src="assets/icon.png" alt="Mile Marker app icon" />
+    <h1>Every road you've driven, remembered.</h1>
+    <p class="sub">
+      Mile Marker is a private, offline-first travel journal — record your
+      trips, pin photos and notes along the way, and build a personal map
+      of everywhere you've been.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#">Get it on Google Play</a>
+      <a class="btn ghost" href="#features">See what it does</a>
+    </div>
+    <p class="pill-note">Coming soon to Google Play. No account required.</p>
+  </div>
+</section>
 
-  <h2>Where it's stored</h2>
-  <p>Everything above is stored <strong>only on your device</strong>, in a local database
-  and local files. Mile Marker has no backend server and no account system —
-  there is nothing for us to collect, because nothing ever leaves your
-  phone unless you explicitly export it yourself (Settings → Export Data),
-  which creates a file you choose where to save or send.</p>
+<section class="tagline-strip">
+  <strong>No account. No ads. No tracking.</strong>
+  Everything stays on your phone, unless you choose to export it.
+</section>
 
-  <h2>Who it's shared with</h2>
-  <p>Nobody. Mile Marker does not transmit any location, photo, or trip data
-  to any server, developer, or third party. There is no analytics SDK, no
-  ad network, and no crash-reporting service that phones home with your
-  data.</p>
+<section class="features" id="features">
+  <div class="wrap">
+    <h2>A journal for the road, not just a tracker</h2>
+    <p class="lead">
+      Start recording manually, or let Mile Marker notice when you're
+      driving and start on its own — even with the app closed.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <span class="emoji">🗺️</span>
+        <h3>Automatic or manual trips</h3>
+        <p>Hit start and go, or let auto-detect recognize driving speed and begin recording for you.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">📍</span>
+        <h3>Photo pins along the route</h3>
+        <p>Attach a photo to the exact spot on your map — from your camera, your library, or matched automatically from photos you took along the way.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">💬</span>
+        <h3>Notes anywhere, not just at the end</h3>
+        <p>Drop a timestamped, geotagged comment mid-drive so the little moments don't get lost in a single end-of-trip review.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🖼️</span>
+        <h3>Memories, all in one place</h3>
+        <p>Every photo across every trip, browsable in a single grid — a photo album organized by the road you took.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">📤</span>
+        <h3>Export & import</h3>
+        <p>Back up your trips or move them to a new device as a single file you control — nothing leaves your phone unless you say so.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🔒</span>
+        <h3>Private by design</h3>
+        <p>No backend server, no account system. Mile Marker simply has nothing to collect.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <h2>Notifications</h2>
-  <p>Mile Marker can send local notifications (trip auto-detected, long stop
-  detected) — these are generated and delivered entirely on-device and are
-  not routed through any push-notification service.</p>
+<section class="privacy-callout" id="privacy">
+  <div class="wrap">
+    <div class="copy">
+      <h2>Your trips stay yours</h2>
+      <p>
+        Mile Marker was built offline-first from day one. There's no server
+        behind it — your routes, photos, and notes live only on your device.
+      </p>
+      <ul>
+        <li>Location is used only to record trips and place pins — never for anything else.</li>
+        <li>Photos you attach are copied on-device so they're never lost.</li>
+        <li>Nothing is transmitted anywhere unless you explicitly export it yourself.</li>
+      </ul>
+    </div>
+    <div class="badge-stack">
+      <a class="badge" href="privacy.html">Read the full Privacy Policy →</a>
+    </div>
+  </div>
+</section>
 
-  <h2>Your control</h2>
-  <p>You can revoke location, camera, photo library, or notification
-  permissions at any time in your device's system settings; the
-  corresponding features will simply stop working rather than silently
-  retrying. Deleting the app deletes all of its local data.</p>
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="mailto:milemarker.dev@gmail.com">milemarker.dev@gmail.com</a>
+    </div>
+    &copy; 2026 Mile Marker. All rights reserved.
+  </div>
+</footer>
 
-  <h2>Contact</h2>
-  <p><a href="mailto:milemarker.dev@gmail.com">milemarker.dev@gmail.com</a></p>
 </body>
 </html>
