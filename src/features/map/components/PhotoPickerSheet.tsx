@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, Image, Modal, Pressable, StyleSheet } from "react-native";
+import { FlatList, Image, Modal, Pressable, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
@@ -9,16 +9,17 @@ import { spacing, useAppTheme } from "@/theme";
 
 import { RECENT_PHOTOS_LIMIT } from "../constants";
 import { useCameraPermission } from "../hooks/useCameraPermission";
+import type { PinMediaType } from "../types";
 
 export type PhotoPickerSheetProps = {
   visible: boolean;
   onClose: () => void;
-  onSelect: (uri: string) => void;
+  onSelect: (uri: string, mediaType: PinMediaType) => void;
 };
 
 const NUM_COLUMNS = 3;
 
-/** Full-screen modal grid of recent camera-roll photos, used to pick one to attach to a pin. */
+/** Full-screen modal grid of recent camera-roll photos and videos, used to pick one to attach to a pin. */
 export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerSheetProps) {
   const theme = useAppTheme();
   const cameraPermission = useCameraPermission();
@@ -29,8 +30,12 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
     const granted = cameraPermission.isGranted || (await cameraPermission.request());
     if (!granted) return;
 
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
-    if (!result.canceled && result.assets[0]) onSelect(result.assets[0].uri);
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      quality: 0.8,
+    });
+    const asset = result.assets?.[0];
+    if (!result.canceled && asset) onSelect(asset.uri, asset.type === "video" ? "video" : "photo");
   };
 
   useEffect(() => {
@@ -39,7 +44,7 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
     let cancelled = false;
     setIsLoading(true);
     MediaLibrary.getAssetsAsync({
-      mediaType: "photo",
+      mediaType: ["photo", "video"],
       first: RECENT_PHOTOS_LIMIT,
       sortBy: [["creationTime", false]],
     })
@@ -59,7 +64,7 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <ScreenContainer>
         <AppHeader
-          title="Choose a photo"
+          title="Choose a photo or video"
           right={
             <Pressable onPress={onClose}>
               <AppText color="secondary">Cancel</AppText>
@@ -72,7 +77,9 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
           onPress={handleTakePhoto}
         >
           <MaterialCommunityIcons name="camera-outline" size={22} color={theme.palette.primary} />
-          <AppText style={[styles.takePhotoLabel, { color: theme.palette.primary }]}>Take Photo</AppText>
+          <AppText style={[styles.takePhotoLabel, { color: theme.palette.primary }]}>
+            Take Photo or Video
+          </AppText>
         </Pressable>
 
         {isLoading ? (
@@ -82,10 +89,19 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
             data={assets}
             keyExtractor={(asset) => asset.id}
             numColumns={NUM_COLUMNS}
-            ListEmptyComponent={<AppText color="secondary">No photos found on this device.</AppText>}
+            ListEmptyComponent={<AppText color="secondary">No photos or videos found on this device.</AppText>}
             renderItem={({ item }) => (
-              <Pressable style={styles.cell} onPress={() => onSelect(item.uri)}>
-                <Image source={{ uri: item.uri }} style={styles.thumbnail} />
+              <Pressable
+                style={styles.cell}
+                onPress={() => onSelect(item.uri, item.mediaType === "video" ? "video" : "photo")}
+              >
+                {item.mediaType === "video" ? (
+                  <View style={[styles.thumbnail, styles.videoPlaceholder]}>
+                    <MaterialCommunityIcons name="play-circle" size={28} color="#FFFFFF" />
+                  </View>
+                ) : (
+                  <Image source={{ uri: item.uri }} style={styles.thumbnail} />
+                )}
               </Pressable>
             )}
           />
@@ -115,5 +131,10 @@ const styles = StyleSheet.create({
   thumbnail: {
     flex: 1,
     borderRadius: 4,
+  },
+  videoPlaceholder: {
+    backgroundColor: "#000000",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

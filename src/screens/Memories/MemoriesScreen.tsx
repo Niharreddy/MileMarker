@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
 import { AppHeader, AppText, ScreenContainer } from "@/components";
-import type { Pin } from "@/features/map";
+import { getPinThumbnailUri, type Pin } from "@/features/map";
 import { useTripStore } from "@/features/trips";
 import { spacing, useAppTheme } from "@/theme";
 
@@ -16,7 +17,7 @@ type Memory = {
 const GRID_COLUMNS = 3;
 const GRID_GAP = spacing.xs;
 
-/** Every photo pinned across all trips, flattened and sorted newest first. */
+/** Every photo/video pinned across all trips, flattened and sorted newest first. */
 export function MemoriesScreen() {
   const theme = useAppTheme();
   const navigation = useNavigation();
@@ -42,7 +43,7 @@ export function MemoriesScreen() {
         columnWrapperStyle={styles.row}
         ListEmptyComponent={
           <AppText color="secondary">
-            Photos you pin during a trip will show up here.
+            Photos and videos you pin during a trip will show up here.
           </AppText>
         }
         renderItem={({ item }) => (
@@ -50,7 +51,12 @@ export function MemoriesScreen() {
             style={[styles.tile, { borderColor: theme.palette.border }]}
             onPress={() => navigation.navigate("TripDetail", { tripId: item.tripId })}
           >
-            <Image source={{ uri: item.pin.uri }} style={styles.image} />
+            <Image source={{ uri: getPinThumbnailUri(item.pin) }} style={styles.image} />
+            {item.pin.mediaType === "video" ? (
+              <View style={styles.videoBadge}>
+                <MaterialCommunityIcons name="play-circle" size={22} color="#FFFFFF" />
+              </View>
+            ) : null}
           </Pressable>
         )}
       />
@@ -73,5 +79,11 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+  videoBadge: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
 });

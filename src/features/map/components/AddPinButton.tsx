@@ -5,21 +5,23 @@ import { FAB } from "react-native-paper";
 import { spacing, useAppTheme } from "@/theme";
 
 import { useGalleryPermission } from "../hooks/useGalleryPermission";
+import type { PinMediaType } from "../types";
 import { PhotoPickerSheet } from "./PhotoPickerSheet";
 
 export type AddPinButtonProps = {
   /** Disable when there's nothing meaningful to attach a photo to (e.g. no active trip, no location yet). */
   disabled?: boolean;
-  onPickPhoto: (uri: string) => void;
+  onPickMedia: (uri: string, mediaType: PinMediaType) => void;
 };
 
 /**
  * Floating action button: requests gallery access (if not already granted),
- * opens the photo picker, and hands the chosen photo's URI back to the
- * caller. Deliberately has no opinion on what happens to that photo — the
- * caller (e.g. the trips feature) decides where the resulting pin goes.
+ * opens the photo/video picker, and hands the chosen media's URI and type
+ * back to the caller. Deliberately has no opinion on what happens to that
+ * media — the caller (e.g. the trips feature) decides where the resulting
+ * pin goes.
  */
-export function AddPinButton({ disabled = false, onPickPhoto }: AddPinButtonProps) {
+export function AddPinButton({ disabled = false, onPickMedia }: AddPinButtonProps) {
   const theme = useAppTheme();
   const galleryPermission = useGalleryPermission();
   const [isPickerVisible, setIsPickerVisible] = useState(false);
@@ -33,8 +35,8 @@ export function AddPinButton({ disabled = false, onPickPhoto }: AddPinButtonProp
     setIsPickerVisible(true);
   };
 
-  const handleSelectPhoto = (uri: string) => {
-    onPickPhoto(uri);
+  const handleSelectMedia = (uri: string, mediaType: PinMediaType) => {
+    onPickMedia(uri, mediaType);
     setIsPickerVisible(false);
   };
 
@@ -50,7 +52,7 @@ export function AddPinButton({ disabled = false, onPickPhoto }: AddPinButtonProp
       <PhotoPickerSheet
         visible={isPickerVisible}
         onClose={() => setIsPickerVisible(false)}
-        onSelect={handleSelectPhoto}
+        onSelect={handleSelectMedia}
       />
     </>
   );

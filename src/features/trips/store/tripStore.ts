@@ -15,7 +15,7 @@ import {
   persistTripNote,
   persistTripPin,
 } from "../persistence";
-import { deletePinPhoto } from "../photoStorage";
+import { deletePinMedia } from "../photoStorage";
 import type { Trip, TripNote } from "../types";
 
 export type TripState = {
@@ -117,7 +117,7 @@ export const useTripStore = create<TripState>()((set, get) => ({
     if (!trip) return;
     persistTripDeleted(id);
     set({ pastTrips: pastTrips.filter((candidate) => candidate.id !== id) });
-    for (const pin of trip.pins) void deletePinPhoto(pin.uri);
+    for (const pin of trip.pins) void deletePinMedia(pin.uri, pin.thumbnailUri);
   },
 
   addPinToActiveTrip: (pin) => {

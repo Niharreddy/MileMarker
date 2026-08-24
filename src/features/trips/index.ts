@@ -10,7 +10,7 @@ export { calculateTripDistanceMeters, distanceBetweenMeters, formatDistance, nea
 export { formatMinutes, formatTripDuration, formatTripStartedAt } from "./formatters";
 export { useBackgroundTripTracking } from "./hooks/useBackgroundTripTracking";
 export { useTripRecorder } from "./hooks/useTripRecorder";
-export { persistPinPhoto } from "./photoStorage";
+export { persistPinMedia } from "./photoStorage";
 export type { SaveTripFormValues } from "./schema";
 export { useTripStore } from "./store/tripStore";
 export type { TripState } from "./store/tripStore";

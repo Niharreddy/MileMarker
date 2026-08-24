@@ -13,7 +13,7 @@ import {
 } from "@/features/map";
 import {
   LifetimeStats,
-  persistPinPhoto,
+  persistPinMedia,
   SaveTripDialog,
   TripControls,
   TripRecordingStats,
@@ -74,11 +74,18 @@ export function HomeScreen() {
           <>
             <AddPinButton
               disabled={!coordinates}
-              onPickPhoto={async (uri) => {
+              onPickMedia={async (uri, mediaType) => {
                 if (!coordinates) return;
                 const id = uuid();
-                const persistedUri = await persistPinPhoto(uri, id);
-                addPinToActiveTrip({ id, uri: persistedUri, coordinates, createdAt: Date.now() });
+                const { uri: persistedUri, thumbnailUri } = await persistPinMedia(uri, id, mediaType);
+                addPinToActiveTrip({
+                  id,
+                  uri: persistedUri,
+                  mediaType,
+                  thumbnailUri,
+                  coordinates,
+                  createdAt: Date.now(),
+                });
               }}
             />
             <AddNoteButton

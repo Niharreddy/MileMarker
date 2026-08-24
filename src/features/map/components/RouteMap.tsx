@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AppButton, AppText } from "@/components";
 import { spacing, useAppTheme } from "@/theme";
 
+import { getPinThumbnailUri } from "../pinMedia";
 import type { Coordinates, Note, Pin } from "../types";
 
 function formatNoteTimestamp(createdAt: number) {
@@ -127,7 +128,12 @@ export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates }
             coordinate={[pin.coordinates.longitude, pin.coordinates.latitude]}
           >
             <View style={[styles.pin, { borderColor: theme.palette.onPrimary }]}>
-              <Image source={{ uri: pin.uri }} style={styles.pinImage} />
+              <Image source={{ uri: getPinThumbnailUri(pin) }} style={styles.pinImage} />
+              {pin.mediaType === "video" ? (
+                <View style={styles.pinVideoBadge}>
+                  <MaterialCommunityIcons name="play" size={14} color="#FFFFFF" />
+                </View>
+              ) : null}
             </View>
           </PointAnnotation>
         ))}
@@ -185,6 +191,12 @@ const styles = StyleSheet.create({
   pinImage: {
     width: "100%",
     height: "100%",
+  },
+  pinVideoBadge: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
   notePin: {
     width: 28,

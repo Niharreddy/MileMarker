@@ -33,6 +33,8 @@ export function initDatabase() {
       id TEXT PRIMARY KEY,
       trip_id TEXT NOT NULL,
       uri TEXT NOT NULL,
+      media_type TEXT NOT NULL DEFAULT 'photo',
+      thumbnail_uri TEXT,
       latitude REAL NOT NULL,
       longitude REAL NOT NULL,
       created_at INTEGER NOT NULL,
@@ -53,6 +55,20 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_trip_pins_trip ON trip_pins(trip_id);
     CREATE INDEX IF NOT EXISTS idx_trip_notes_trip ON trip_notes(trip_id);
   `);
+
+  // `CREATE TABLE IF NOT EXISTS` above doesn't add columns to a trip_pins
+  // table that already existed pre-video-support — do that here,
+  // idempotently, since ALTER TABLE has no "IF NOT EXISTS" for columns.
+  try {
+    db.execSync(`ALTER TABLE trip_pins ADD COLUMN media_type TEXT NOT NULL DEFAULT 'photo';`);
+  } catch {
+    // Column already exists.
+  }
+  try {
+    db.execSync(`ALTER TABLE trip_pins ADD COLUMN thumbnail_uri TEXT;`);
+  } catch {
+    // Column already exists.
+  }
 }
 
 export type TripRow = {
@@ -74,6 +90,8 @@ export type TripPinRow = {
   id: string;
   trip_id: string;
   uri: string;
+  media_type: string;
+  thumbnail_uri: string | null;
   latitude: number;
   longitude: number;
   created_at: number;
@@ -123,13 +141,15 @@ export function insertTripPinRow(
   id: string,
   tripId: string,
   uri: string,
+  mediaType: string,
+  thumbnailUri: string | null,
   latitude: number,
   longitude: number,
   createdAt: number
 ) {
   db.runSync(
-    `INSERT INTO trip_pins (id, trip_id, uri, latitude, longitude, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, tripId, uri, latitude, longitude, createdAt]
+    `INSERT INTO trip_pins (id, trip_id, uri, media_type, thumbnail_uri, latitude, longitude, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, tripId, uri, mediaType, thumbnailUri, latitude, longitude, createdAt]
   );
 }
 

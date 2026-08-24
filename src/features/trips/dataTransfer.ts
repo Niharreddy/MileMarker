@@ -16,7 +16,7 @@ import { useTripStore } from "./store/tripStore";
 const PINS_DIR = `${FileSystem.documentDirectory}pins/`;
 
 /**
- * Every past trip — points, pins (photo bytes embedded as base64), and
+ * Every past trip — points, pins (photo/video bytes embedded as base64), and
  * notes — serialized to a single JSON file and handed to the OS share
  * sheet (save to Drive/Files, send via email, AirDrop, etc.). No zip
  * library: base64 costs ~33% extra size, but it keeps this to one file and
@@ -35,7 +35,26 @@ export async function exportAllData(): Promise<void> {
         encoding: FileSystem.EncodingType.Base64,
       });
       const photoExtension = pin.uri.split(".").pop()?.split("?")[0] || "jpg";
-      pins.push({ id: pin.id, coordinates: pin.coordinates, createdAt: pin.createdAt, photoBase64, photoExtension });
+
+      let thumbnailBase64: string | undefined;
+      let thumbnailExtension: string | undefined;
+      if (pin.mediaType === "video" && pin.thumbnailUri) {
+        thumbnailBase64 = await FileSystem.readAsStringAsync(pin.thumbnailUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        thumbnailExtension = pin.thumbnailUri.split(".").pop()?.split("?")[0] || "jpg";
+      }
+
+      pins.push({
+        id: pin.id,
+        coordinates: pin.coordinates,
+        createdAt: pin.createdAt,
+        photoBase64,
+        photoExtension,
+        mediaType: pin.mediaType,
+        thumbnailBase64,
+        thumbnailExtension,
+      });
     }
 
     trips.push({
@@ -104,9 +123,20 @@ export async function importDataFromFile(): Promise<{ importedCount: number }> {
       await FileSystem.writeAsStringAsync(photoUri, pin.photoBase64, {
         encoding: FileSystem.EncodingType.Base64,
       });
+
+      let thumbnailUri: string | undefined;
+      if (pin.mediaType === "video" && pin.thumbnailBase64 && pin.thumbnailExtension) {
+        thumbnailUri = `${PINS_DIR}${pin.id}-thumb.${pin.thumbnailExtension}`;
+        await FileSystem.writeAsStringAsync(thumbnailUri, pin.thumbnailBase64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      }
+
       persistTripPin(trip.id, {
         id: pin.id,
         uri: photoUri,
+        mediaType: pin.mediaType,
+        thumbnailUri,
         coordinates: pin.coordinates,
         createdAt: pin.createdAt,
       });

@@ -1,9 +1,11 @@
 export { LOCATION_POLL_INTERVAL_MS } from "./constants";
 export { AddNoteButton } from "./components/AddNoteButton";
 export { AddPinButton } from "./components/AddPinButton";
+export { MediaViewerModal } from "./components/MediaViewerModal";
 export { PermissionGate } from "./components/PermissionGate";
 export { PhotoPickerSheet } from "./components/PhotoPickerSheet";
 export { RouteMap } from "./components/RouteMap";
+export { getPinThumbnailUri } from "./pinMedia";
 export { useBackgroundLocationPermission } from "./hooks/useBackgroundLocationPermission";
 export { useCameraPermission } from "./hooks/useCameraPermission";
 export { useCurrentLocation } from "./hooks/useCurrentLocation";
@@ -12,4 +14,4 @@ export { useGalleryPermission } from "./hooks/useGalleryPermission";
 export { useLocationPermission } from "./hooks/useLocationPermission";
 export { useNotificationPermission } from "./hooks/useNotificationPermission";
 export { usePermission } from "./hooks/usePermission";
-export type { Coordinates, Note, Pin } from "./types";
+export type { Coordinates, Note, Pin, PinMediaType } from "./types";

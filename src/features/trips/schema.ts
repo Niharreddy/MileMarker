@@ -18,6 +18,10 @@ const exportedPinSchema = z.object({
   createdAt: z.number(),
   photoBase64: z.string(),
   photoExtension: z.string(),
+  // Older export files predate video support and have neither field — default to "photo".
+  mediaType: z.enum(["photo", "video"]).default("photo"),
+  thumbnailBase64: z.string().optional(),
+  thumbnailExtension: z.string().optional(),
 });
 
 const exportedNoteSchema = z.object({

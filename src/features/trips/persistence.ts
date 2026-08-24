@@ -1,4 +1,4 @@
-import type { Pin } from "@/features/map";
+import type { Pin, PinMediaType } from "@/features/map";
 import {
   deleteTripRow,
   getAllTripRows,
@@ -43,7 +43,16 @@ export function persistTripPoint(tripId: string, point: TripPoint) {
 }
 
 export function persistTripPin(tripId: string, pin: Pin) {
-  insertTripPinRow(pin.id, tripId, pin.uri, pin.coordinates.latitude, pin.coordinates.longitude, pin.createdAt);
+  insertTripPinRow(
+    pin.id,
+    tripId,
+    pin.uri,
+    pin.mediaType,
+    pin.thumbnailUri ?? null,
+    pin.coordinates.latitude,
+    pin.coordinates.longitude,
+    pin.createdAt
+  );
 }
 
 export function persistTripNote(tripId: string, note: TripNote) {
@@ -65,6 +74,8 @@ export function loadAllTrips(): Trip[] {
     pins: getTripPinRows(row.id).map((pin) => ({
       id: pin.id,
       uri: pin.uri,
+      mediaType: pin.media_type as PinMediaType,
+      thumbnailUri: pin.thumbnail_uri ?? undefined,
       coordinates: { latitude: pin.latitude, longitude: pin.longitude },
       createdAt: pin.created_at,
     })),

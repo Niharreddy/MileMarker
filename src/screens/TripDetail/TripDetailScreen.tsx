@@ -1,9 +1,10 @@
-import React from "react";
-import { FlatList, Image, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { AppText, ScreenContainer } from "@/components";
-import { RouteMap } from "@/features/map";
+import { getPinThumbnailUri, MediaViewerModal, RouteMap } from "@/features/map";
 import {
   calculateTripDistanceMeters,
   formatDistance,
@@ -23,6 +24,7 @@ export function TripDetailScreen({ route }: Props) {
   const trip = useTripStore((state) =>
     state.pastTrips.find((candidate) => candidate.id === route.params.tripId)
   );
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   if (!trip) {
     return (
@@ -76,11 +78,23 @@ export function TripDetailScreen({ route }: Props) {
           data={trip.pins}
           keyExtractor={(pin) => pin.id}
           showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Image source={{ uri: item.uri }} style={[styles.photo, { borderColor: theme.palette.border }]} />
+          renderItem={({ item, index }) => (
+            <Pressable style={styles.photoWrapper} onPress={() => setViewerIndex(index)}>
+              <Image
+                source={{ uri: getPinThumbnailUri(item) }}
+                style={[styles.photo, { borderColor: theme.palette.border }]}
+              />
+              {item.mediaType === "video" ? (
+                <View style={styles.videoBadge}>
+                  <MaterialCommunityIcons name="play-circle" size={22} color="#FFFFFF" />
+                </View>
+              ) : null}
+            </Pressable>
           )}
         />
       )}
+
+      <MediaViewerModal pins={trip.pins} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
     </ScreenContainer>
   );
 }
@@ -103,11 +117,20 @@ const styles = StyleSheet.create({
   noteRow: {
     marginBottom: spacing.sm,
   },
+  photoWrapper: {
+    marginRight: spacing.sm,
+  },
   photo: {
     width: 96,
     height: 96,
     borderRadius: 8,
-    marginRight: spacing.sm,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  videoBadge: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
 });

@@ -1,10 +1,10 @@
 import * as MediaLibrary from "expo-media-library";
 import { v4 as uuid } from "uuid";
 
-import type { Pin } from "@/features/map";
+import type { Pin, PinMediaType } from "@/features/map";
 
 import { nearestDistanceMeters } from "./distance";
-import { persistPinPhoto } from "./photoStorage";
+import { persistPinMedia } from "./photoStorage";
 import type { Trip } from "./types";
 
 /** How close a photo's EXIF location must be to any recorded point to count as "on the route". */
@@ -28,7 +28,7 @@ export async function findGeotaggedPhotosForTrip(trip: Trip): Promise<Pin[]> {
   if (permission.status !== "granted") return [];
 
   const { assets } = await MediaLibrary.getAssetsAsync({
-    mediaType: "photo",
+    mediaType: ["photo", "video"],
     createdAfter: trip.startedAt - TIME_BUFFER_MS,
     createdBefore: trip.endedAt + TIME_BUFFER_MS,
     first: MAX_CANDIDATES,
@@ -48,10 +48,13 @@ export async function findGeotaggedPhotosForTrip(trip: Trip): Promise<Pin[]> {
     if (distance > MATCH_RADIUS_METERS) continue;
 
     const id = uuid();
-    const persistedUri = await persistPinPhoto(asset.uri, id);
+    const mediaType: PinMediaType = asset.mediaType === "video" ? "video" : "photo";
+    const { uri: persistedUri, thumbnailUri } = await persistPinMedia(asset.uri, id, mediaType);
     matches.push({
       id,
       uri: persistedUri,
+      mediaType,
+      thumbnailUri,
       coordinates: { latitude: location.latitude, longitude: location.longitude },
       createdAt: asset.creationTime,
     });
