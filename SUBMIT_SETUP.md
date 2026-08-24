@@ -8,7 +8,7 @@ them before running `eas submit`, which is a manual step you run yourself
 
 1. Create a Google Play Console developer account ($25 one-time) at
    https://play.google.com/console if you don't have one.
-2. Create the app listing there first (package name `com.nihar.milemarker`,
+2. Create the app listing there first (package name `com.milemarker.myapp`,
    matching `app.json`'s `android.package`) — EAS submit uploads a build to
    an existing listing, it doesn't create one.
 3. In Play Console: **Setup → API access** → create a service account,
@@ -24,7 +24,7 @@ them before running `eas submit`, which is a manual step you run yourself
 1. Create an Apple Developer Program account ($99/year) at
    https://developer.apple.com if you don't have one.
 2. Create the app listing in App Store Connect (bundle id
-   `com.nihar.milemarker`, matching `app.json`'s `ios.bundleIdentifier`).
+   `com.milemarker.myapp`, matching `app.json`'s `ios.bundleIdentifier`).
 3. Replace the three placeholders in `eas.json`:
    - `appleId` — your Apple Developer account email.
    - `ascAppId` — the numeric App Store Connect app id (App Store Connect →
