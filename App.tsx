@@ -7,7 +7,7 @@ import "react-native-get-random-values";
 // at the top level, not inside a component — the OS can relaunch the JS
 // engine to deliver a location update while the app is backgrounded/killed,
 // and the task has to already be defined before that event dispatches.
-import "@/features/trips/backgroundLocationTask";
+import "@/features/drives/backgroundLocationTask";
 
 import React from "react";
 

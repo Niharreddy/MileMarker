@@ -4,33 +4,33 @@ import { StyleSheet, View } from "react-native";
 import { AppText } from "@/components";
 import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
+import { calculateRouteDistanceMeters, formatDistance } from "@/utils";
 
-import { calculateTripDistanceMeters, formatDistance } from "../distance";
-import { useTripStore } from "../store/tripStore";
+import { useDriveStore } from "../store/driveStore";
 
 /**
- * Lifetime totals across every completed trip: trip count, total distance,
- * and "memories" (photos attached + one per trip with a written review).
+ * Lifetime totals across every completed drive: drive count, total distance,
+ * and "memories" (photos attached + one per drive with a written review).
  * Always shown, even as zeros, for a new user.
  */
 export function LifetimeStats() {
   const theme = useAppTheme();
   const unitPreference = useSettingsStore((state) => state.unitPreference);
-  const pastTrips = useTripStore((state) => state.pastTrips);
+  const pastDrives = useDriveStore((state) => state.pastDrives);
 
-  const { tripCount, totalDistanceMeters, memoryCount } = useMemo(() => {
+  const { driveCount, totalDistanceMeters, memoryCount } = useMemo(() => {
     let totalDistanceMeters = 0;
     let memoryCount = 0;
-    for (const trip of pastTrips) {
-      totalDistanceMeters += calculateTripDistanceMeters(trip.points);
-      memoryCount += trip.pins.length + (trip.review.trim() ? 1 : 0);
+    for (const drive of pastDrives) {
+      totalDistanceMeters += calculateRouteDistanceMeters(drive.points);
+      memoryCount += drive.pins.length + (drive.review.trim() ? 1 : 0);
     }
-    return { tripCount: pastTrips.length, totalDistanceMeters, memoryCount };
-  }, [pastTrips]);
+    return { driveCount: pastDrives.length, totalDistanceMeters, memoryCount };
+  }, [pastDrives]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.palette.surfaceVariant }]}>
-      <Stat label="Trips" value={String(tripCount)} />
+      <Stat label="Drives" value={String(driveCount)} />
       <Stat label="Distance" value={formatDistance(totalDistanceMeters, unitPreference)} />
       <Stat label="Memories" value={String(memoryCount)} />
     </View>

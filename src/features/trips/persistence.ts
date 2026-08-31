@@ -1,29 +1,25 @@
-import type { Pin, PinMediaType } from "@/features/map";
 import {
   deleteTripRow,
   getAllTripRows,
   getTripNoteRows,
-  getTripPinRows,
-  getTripPointRows,
   initDatabase,
   insertTripNoteRow,
-  insertTripPinRow,
-  insertTripPointRow,
   insertTripRow,
   updateTripDetailsRow,
   updateTripEndedAtRow,
+  updateTripReviewRow,
 } from "@/services/db";
 
-import type { Trip, TripNote, TripPoint } from "./types";
+import type { Trip, TripNote } from "./types";
 
-/** Maps between the generic DB row shapes in `services/db` and this feature's `Trip` domain type. */
+/** Maps between the generic DB row shapes in `services/db` and this feature's `Trip` (bundle) domain type. */
 
 export function initTripDatabase() {
   initDatabase();
 }
 
-export function persistNewTrip(id: string, startedAt: number) {
-  insertTripRow(id, startedAt);
+export function persistNewTrip(id: string, startedAt: number, name: string, dateLabel: string) {
+  insertTripRow(id, startedAt, name, dateLabel);
 }
 
 export function persistTripEnded(id: string, endedAt: number) {
@@ -34,25 +30,12 @@ export function persistTripDetails(id: string, name: string, review: string) {
   updateTripDetailsRow(id, name, review);
 }
 
+export function persistTripReview(id: string, review: string) {
+  updateTripReviewRow(id, review);
+}
+
 export function persistTripDeleted(id: string) {
   deleteTripRow(id);
-}
-
-export function persistTripPoint(tripId: string, point: TripPoint) {
-  insertTripPointRow(tripId, point.latitude, point.longitude, point.timestamp);
-}
-
-export function persistTripPin(tripId: string, pin: Pin) {
-  insertTripPinRow(
-    pin.id,
-    tripId,
-    pin.uri,
-    pin.mediaType,
-    pin.thumbnailUri ?? null,
-    pin.coordinates.latitude,
-    pin.coordinates.longitude,
-    pin.createdAt
-  );
 }
 
 export function persistTripNote(tripId: string, note: TripNote) {
@@ -64,21 +47,9 @@ export function loadAllTrips(): Trip[] {
     id: row.id,
     name: row.name,
     review: row.review,
+    dateLabel: row.date_label,
     startedAt: row.started_at,
     endedAt: row.ended_at,
-    points: getTripPointRows(row.id).map((point) => ({
-      latitude: point.latitude,
-      longitude: point.longitude,
-      timestamp: point.timestamp,
-    })),
-    pins: getTripPinRows(row.id).map((pin) => ({
-      id: pin.id,
-      uri: pin.uri,
-      mediaType: pin.media_type as PinMediaType,
-      thumbnailUri: pin.thumbnail_uri ?? undefined,
-      coordinates: { latitude: pin.latitude, longitude: pin.longitude },
-      createdAt: pin.created_at,
-    })),
     notes: getTripNoteRows(row.id).map((note) => ({
       id: note.id,
       text: note.text,

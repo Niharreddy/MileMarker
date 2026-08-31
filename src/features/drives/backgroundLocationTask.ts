@@ -12,11 +12,11 @@ export const BACKGROUND_LOCATION_TASK = "milemarker-background-location";
  * dispatching the event, so the task has to already be defined by then.
  * Imported once, unconditionally, from App.tsx.
  *
- * Delegates to `handleLocationSample`, which reads the active trip id from
+ * Delegates to `handleLocationSample`, which reads the active drive id from
  * MMKV (not this module's own state) so it works correctly even when the OS
  * spins up a fresh, empty JS context just to deliver this event. This same
- * subscription runs whether or not a trip is active — see
- * `useLocationMonitoring` — so each fix might be a recorded trip point or a
+ * subscription runs whether or not a drive is active — see
+ * `useLocationMonitoring` — so each fix might be a recorded drive point or a
  * driving-detection sample, decided per-sample by `handleLocationSample`.
  */
 TaskManager.defineTask<{ locations: Location.LocationObject[] }>(

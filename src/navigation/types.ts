@@ -1,6 +1,7 @@
 /** Params for each bottom-tab route. */
 export type RootTabParamList = {
   Home: undefined;
+  Drives: undefined;
   Trips: undefined;
   Memories: undefined;
   Settings: undefined;
@@ -8,12 +9,13 @@ export type RootTabParamList = {
 
 /**
  * Top-level stack wrapping the tab navigator, so screens that need to
- * appear over the tabs (currently just TripDetail) can be pushed from
- * anywhere — a search result on Home, or a row on the Trips tab.
+ * appear over the tabs (Drive and Trip detail) can be pushed from anywhere
+ * — a search result on Home, or a row on the Drives/Trips tab.
  */
 export type RootStackParamList = {
   Main: undefined;
-  TripDetail: { tripId: string };
+  Drive: { driveId: string };
+  Trip: { tripId: string };
 };
 
 // Merges both param lists into one namespace so `useNavigation()`/`navigate()`

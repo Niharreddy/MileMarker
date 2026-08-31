@@ -1,55 +1,17 @@
 import { z } from "zod";
 
+/** Shown when starting a Trip — captured up front, before recording begins. */
+export const startTripSchema = z.object({
+  name: z.string().trim().min(1, "Give this trip a name"),
+  dateLabel: z.string().trim().max(60, "Keep it short"),
+});
+
+export type StartTripFormValues = z.infer<typeof startTripSchema>;
+
+/** Shown when stopping a Trip — lets the name/description be reviewed or adjusted before it's filed away. */
 export const saveTripSchema = z.object({
   name: z.string().trim().min(1, "Give this trip a name"),
   review: z.string().trim().max(500, "Keep it under 500 characters"),
 });
 
 export type SaveTripFormValues = z.infer<typeof saveTripSchema>;
-
-const coordinatesSchema = z.object({
-  latitude: z.number(),
-  longitude: z.number(),
-});
-
-const exportedPinSchema = z.object({
-  id: z.string(),
-  coordinates: coordinatesSchema,
-  createdAt: z.number(),
-  photoBase64: z.string(),
-  photoExtension: z.string(),
-  // Older export files predate video support and have neither field — default to "photo".
-  mediaType: z.enum(["photo", "video"]).default("photo"),
-  thumbnailBase64: z.string().optional(),
-  thumbnailExtension: z.string().optional(),
-});
-
-const exportedNoteSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  coordinates: coordinatesSchema,
-  createdAt: z.number(),
-});
-
-const exportedTripSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  review: z.string(),
-  startedAt: z.number(),
-  endedAt: z.number(),
-  points: z.array(z.object({ latitude: z.number(), longitude: z.number(), timestamp: z.number() })),
-  pins: z.array(exportedPinSchema),
-  notes: z.array(exportedNoteSchema),
-});
-
-/** Shape of a Mile Marker data-export file, validated on import before touching the database. */
-export const exportFileSchema = z.object({
-  schemaVersion: z.literal(1),
-  exportedAt: z.number(),
-  trips: z.array(exportedTripSchema),
-});
-
-export type ExportFile = z.infer<typeof exportFileSchema>;
-export type ExportedTrip = z.infer<typeof exportedTripSchema>;
-export type ExportedPin = z.infer<typeof exportedPinSchema>;
-export type ExportedNote = z.infer<typeof exportedNoteSchema>;

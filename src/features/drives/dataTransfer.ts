@@ -2,35 +2,35 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
-import { exportFileSchema, type ExportFile, type ExportedTrip } from "./schema";
+import { exportFileSchema, type ExportFile, type ExportedDrive } from "./schema";
 import {
-  persistNewTrip,
-  persistTripDetails,
-  persistTripEnded,
-  persistTripNote,
-  persistTripPin,
-  persistTripPoint,
+  persistDriveDetails,
+  persistDriveEnded,
+  persistDriveNote,
+  persistDrivePin,
+  persistDrivePoint,
+  persistNewDrive,
 } from "./persistence";
-import { useTripStore } from "./store/tripStore";
+import { useDriveStore } from "./store/driveStore";
 
 const PINS_DIR = `${FileSystem.documentDirectory}pins/`;
 
 /**
- * Every past trip — points, pins (photo/video bytes embedded as base64), and
+ * Every past drive — points, pins (photo/video bytes embedded as base64), and
  * notes — serialized to a single JSON file and handed to the OS share
  * sheet (save to Drive/Files, send via email, AirDrop, etc.). No zip
  * library: base64 costs ~33% extra size, but it keeps this to one file and
  * one new-native-module-free code path.
  */
 export async function exportAllData(): Promise<void> {
-  const pastTrips = useTripStore.getState().pastTrips;
+  const pastDrives = useDriveStore.getState().pastDrives;
 
-  const trips: ExportedTrip[] = [];
-  for (const trip of pastTrips) {
-    if (trip.endedAt === null) continue;
+  const drives: ExportedDrive[] = [];
+  for (const drive of pastDrives) {
+    if (drive.endedAt === null) continue;
 
     const pins = [];
-    for (const pin of trip.pins) {
+    for (const pin of drive.pins) {
       const photoBase64 = await FileSystem.readAsStringAsync(pin.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
@@ -57,19 +57,19 @@ export async function exportAllData(): Promise<void> {
       });
     }
 
-    trips.push({
-      id: trip.id,
-      name: trip.name,
-      review: trip.review,
-      startedAt: trip.startedAt,
-      endedAt: trip.endedAt,
-      points: trip.points,
+    drives.push({
+      id: drive.id,
+      name: drive.name,
+      review: drive.review,
+      startedAt: drive.startedAt,
+      endedAt: drive.endedAt,
+      points: drive.points,
       pins,
-      notes: trip.notes,
+      notes: drive.notes,
     });
   }
 
-  const exportFile: ExportFile = { schemaVersion: 1, exportedAt: Date.now(), trips };
+  const exportFile: ExportFile = { schemaVersion: 1, exportedAt: Date.now(), trips: drives };
 
   const destinationUri = `${FileSystem.cacheDirectory}milemarker-export-${Date.now()}.json`;
   await FileSystem.writeAsStringAsync(destinationUri, JSON.stringify(exportFile));
@@ -83,10 +83,11 @@ export async function exportAllData(): Promise<void> {
 }
 
 /**
- * Lets the user pick a previously-exported JSON file and merges its trips
- * in. Trips whose id already exists locally are skipped (re-importing the
+ * Lets the user pick a previously-exported JSON file and merges its drives
+ * in. Drives whose id already exists locally are skipped (re-importing the
  * same file, or a file shared back and forth between two devices, doesn't
- * create duplicates).
+ * create duplicates). Imported drives are never attached to a Trip — that's
+ * a local-only association the export format doesn't carry.
  */
 export async function importDataFromFile(): Promise<{ importedCount: number }> {
   const result = await DocumentPicker.getDocumentAsync({ type: "application/json" });
@@ -106,19 +107,19 @@ export async function importDataFromFile(): Promise<{ importedCount: number }> {
     throw new Error("That file isn't valid Mile Marker export data.");
   }
 
-  const existingIds = new Set(useTripStore.getState().pastTrips.map((trip) => trip.id));
+  const existingIds = new Set(useDriveStore.getState().pastDrives.map((drive) => drive.id));
   await FileSystem.makeDirectoryAsync(PINS_DIR, { intermediates: true }).catch(() => {});
 
   let importedCount = 0;
-  for (const trip of exportFile.data.trips) {
-    if (existingIds.has(trip.id)) continue;
+  for (const drive of exportFile.data.trips) {
+    if (existingIds.has(drive.id)) continue;
 
-    persistNewTrip(trip.id, trip.startedAt);
-    persistTripDetails(trip.id, trip.name, trip.review);
-    persistTripEnded(trip.id, trip.endedAt);
-    for (const point of trip.points) persistTripPoint(trip.id, point);
+    persistNewDrive(drive.id, drive.startedAt, null);
+    persistDriveDetails(drive.id, drive.name, drive.review);
+    persistDriveEnded(drive.id, drive.endedAt);
+    for (const point of drive.points) persistDrivePoint(drive.id, point);
 
-    for (const pin of trip.pins) {
+    for (const pin of drive.pins) {
       const photoUri = `${PINS_DIR}${pin.id}.${pin.photoExtension}`;
       await FileSystem.writeAsStringAsync(photoUri, pin.photoBase64, {
         encoding: FileSystem.EncodingType.Base64,
@@ -132,7 +133,7 @@ export async function importDataFromFile(): Promise<{ importedCount: number }> {
         });
       }
 
-      persistTripPin(trip.id, {
+      persistDrivePin(drive.id, {
         id: pin.id,
         uri: photoUri,
         mediaType: pin.mediaType,
@@ -142,12 +143,12 @@ export async function importDataFromFile(): Promise<{ importedCount: number }> {
       });
     }
 
-    for (const note of trip.notes) persistTripNote(trip.id, note);
+    for (const note of drive.notes) persistDriveNote(drive.id, note);
 
     importedCount += 1;
   }
 
-  if (importedCount > 0) useTripStore.getState().reloadFromDatabase();
+  if (importedCount > 0) useDriveStore.getState().reloadFromDatabase();
 
   return { importedCount };
 }

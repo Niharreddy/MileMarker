@@ -6,11 +6,13 @@
 export const StorageKeys = {
   settingsStore: "milemarker.settings",
   /**
-   * Id of the trip currently being recorded, if any. Kept in MMKV (not just
-   * the in-memory trip store) so the background location task can durably
+   * Id of the drive currently being recorded, if any. Kept in MMKV (not just
+   * the in-memory drive store) so the background location task can durably
    * write points even when the OS relaunches the JS engine in a fresh
    * context — reading this doesn't depend on any store being "warm".
    */
+  activeDriveId: "milemarker.activeDriveId",
+  /** Id of the Trip (bundle) currently active, if any — set while it's running so a new Drive can attach to it. */
   activeTripId: "milemarker.activeTripId",
 
   /** Most recent raw location sample seen by auto-detect, used to estimate speed between fixes. */

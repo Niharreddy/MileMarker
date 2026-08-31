@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 
-import { AutoTripDetection } from "@/features/trips";
+import { AutoDriveDetection } from "@/features/drives";
 import { useAppColorScheme } from "@/hooks";
 import { PermissionsPrimingScreen } from "@/screens/PermissionsPriming";
 import { WelcomeScreen } from "@/screens/Welcome";
@@ -39,7 +39,7 @@ export function RootNavigator() {
       <NavigationContainer theme={scheme === "dark" ? navigationDarkTheme : navigationLightTheme}>
         <RootStack />
       </NavigationContainer>
-      <AutoTripDetection />
+      <AutoDriveDetection />
     </>
   );
 }

@@ -38,24 +38,36 @@ MapLibreGL.Logger.setLogLevel("error");
 // host if a different look is wanted later.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
+export type NamedRoute = {
+  id: string;
+  coordinates: Coordinates[];
+};
+
+// Cycled per-route when `routes` is used, so drives in a Trip's combined map are visually distinguishable.
+const ROUTE_COLOR_PALETTE = ["#2E7DFB", "#F5A623", "#7ED957", "#D64545", "#9B59B6", "#1ABC9C"];
+
 export type RouteMapProps = {
   currentLocation: Coordinates | null;
   pins: Pin[];
   notes?: Note[];
-  /** The active trip's recorded path, drawn as a line if it has 2+ points. */
+  /** A single active/past drive's recorded path, drawn as a line if it has 2+ points. */
   routeCoordinates?: Coordinates[];
+  /** Multiple drives' paths (e.g. every drive in a Trip), each drawn in its own color. Takes precedence over `routeCoordinates`. */
+  routes?: NamedRoute[];
 };
 
-export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates }: RouteMapProps) {
+export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates, routes }: RouteMapProps) {
   const theme = useAppTheme();
   const cameraRef = useRef<CameraRef>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   // Camera commands issued before the native map has finished loading are
   // silently dropped, so wait for `onDidFinishLoadingMap` before the first
-  // fit — otherwise a past trip with a route that never changes again (no
-  // re-render to retry on) can get stuck on the default [0, 0] camera,
-  // which renders as a plain blue ocean tile with no route visible.
+  // fit — otherwise a past route that never changes again (no re-render to
+  // retry on) can get stuck on the default [0, 0] camera, which renders as
+  // a plain blue ocean tile with no route visible.
   const [isMapReady, setIsMapReady] = useState(false);
+
+  const allRouteCoordinates = routes ? routes.flatMap((route) => route.coordinates) : routeCoordinates;
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -69,15 +81,15 @@ export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates }
       return;
     }
 
-    // No live location (e.g. viewing a past trip) — frame the whole route instead.
-    if (routeCoordinates && routeCoordinates.length > 1) {
-      const latitudes = routeCoordinates.map((point) => point.latitude);
-      const longitudes = routeCoordinates.map((point) => point.longitude);
+    // No live location (e.g. viewing a past drive/trip) — frame the whole route instead.
+    if (allRouteCoordinates && allRouteCoordinates.length > 1) {
+      const latitudes = allRouteCoordinates.map((point) => point.latitude);
+      const longitudes = allRouteCoordinates.map((point) => point.longitude);
       const northEast: [number, number] = [Math.max(...longitudes), Math.max(...latitudes)];
       const southWest: [number, number] = [Math.min(...longitudes), Math.min(...latitudes)];
       cameraRef.current?.fitBounds(northEast, southWest, 48, 800);
     }
-  }, [currentLocation, routeCoordinates, isMapReady]);
+  }, [currentLocation, allRouteCoordinates, isMapReady]);
 
   return (
     <View style={styles.container}>
@@ -88,24 +100,51 @@ export function RouteMap({ currentLocation, pins, notes = [], routeCoordinates }
       >
         <Camera ref={cameraRef} defaultSettings={{ zoomLevel: 12 }} />
 
-        {routeCoordinates && routeCoordinates.length > 1 ? (
-          <ShapeSource
-            id="route-source"
-            shape={{
-              type: "Feature",
-              geometry: {
-                type: "LineString",
-                coordinates: routeCoordinates.map((point) => [point.longitude, point.latitude]),
-              },
-              properties: {},
-            }}
-          >
-            <LineLayer
-              id="route-line"
-              style={{ lineColor: theme.palette.primary, lineWidth: 4, lineCap: "round", lineJoin: "round" }}
-            />
-          </ShapeSource>
-        ) : null}
+        {routes
+          ? routes
+              .filter((route) => route.coordinates.length > 1)
+              .map((route, index) => (
+                <ShapeSource
+                  key={route.id}
+                  id={`route-source-${route.id}`}
+                  shape={{
+                    type: "Feature",
+                    geometry: {
+                      type: "LineString",
+                      coordinates: route.coordinates.map((point) => [point.longitude, point.latitude]),
+                    },
+                    properties: {},
+                  }}
+                >
+                  <LineLayer
+                    id={`route-line-${route.id}`}
+                    style={{
+                      lineColor: ROUTE_COLOR_PALETTE[index % ROUTE_COLOR_PALETTE.length],
+                      lineWidth: 4,
+                      lineCap: "round",
+                      lineJoin: "round",
+                    }}
+                  />
+                </ShapeSource>
+              ))
+          : routeCoordinates && routeCoordinates.length > 1 ? (
+            <ShapeSource
+              id="route-source"
+              shape={{
+                type: "Feature",
+                geometry: {
+                  type: "LineString",
+                  coordinates: routeCoordinates.map((point) => [point.longitude, point.latitude]),
+                },
+                properties: {},
+              }}
+            >
+              <LineLayer
+                id="route-line"
+                style={{ lineColor: theme.palette.primary, lineWidth: 4, lineCap: "round", lineJoin: "round" }}
+              />
+            </ShapeSource>
+          ) : null}
 
         {currentLocation ? (
           <PointAnnotation

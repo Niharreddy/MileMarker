@@ -4,33 +4,33 @@ import { useNavigation } from "@react-navigation/native";
 
 import { AppSearchBar, AppText } from "@/components";
 import { spacing, useAppTheme } from "@/theme";
+import { formatStartedAt } from "@/utils";
 
-import { formatTripStartedAt } from "../formatters";
-import { useTripStore } from "../store/tripStore";
+import { useDriveStore } from "../store/driveStore";
 
 const MAX_RESULTS = 5;
 
-/** Search-by-name over past trips; tapping a result opens TripDetail. */
-export function TripSearchBar() {
+/** Search-by-name over past drives; tapping a result opens Drive detail. */
+export function DriveSearchBar() {
   const theme = useAppTheme();
   const navigation = useNavigation();
-  const pastTrips = useTripStore((state) => state.pastTrips);
+  const pastDrives = useDriveStore((state) => state.pastDrives);
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
-    return pastTrips.filter((trip) => trip.name.toLowerCase().includes(trimmed)).slice(0, MAX_RESULTS);
-  }, [query, pastTrips]);
+    return pastDrives.filter((drive) => drive.name.toLowerCase().includes(trimmed)).slice(0, MAX_RESULTS);
+  }, [query, pastDrives]);
 
-  const handleSelect = (tripId: string) => {
+  const handleSelect = (driveId: string) => {
     setQuery("");
-    navigation.navigate("TripDetail", { tripId });
+    navigation.navigate("Drive", { driveId });
   };
 
   return (
     <View style={styles.container}>
-      <AppSearchBar value={query} onChangeText={setQuery} placeholder="Search your trips" />
+      <AppSearchBar value={query} onChangeText={setQuery} placeholder="Search your drives" />
 
       {query.trim().length > 0 ? (
         <View
@@ -41,14 +41,14 @@ export function TripSearchBar() {
         >
           {results.length === 0 ? (
             <AppText color="secondary" style={styles.resultRow}>
-              No trips match “{query.trim()}”.
+              No drives match “{query.trim()}”.
             </AppText>
           ) : (
-            results.map((trip) => (
-              <Pressable key={trip.id} onPress={() => handleSelect(trip.id)} style={styles.resultRow}>
-                <AppText variant="titleSmall">{trip.name}</AppText>
+            results.map((drive) => (
+              <Pressable key={drive.id} onPress={() => handleSelect(drive.id)} style={styles.resultRow}>
+                <AppText variant="titleSmall">{drive.name}</AppText>
                 <AppText color="secondary" variant="bodySmall">
-                  {formatTripStartedAt(trip.startedAt)}
+                  {formatStartedAt(drive.startedAt)}
                 </AppText>
               </Pressable>
             ))

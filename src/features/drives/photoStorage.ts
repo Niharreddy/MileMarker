@@ -24,7 +24,7 @@ export type PersistedPinMedia = {
  * sources can disappear later — a gallery asset can be deleted by the user, a
  * cache file can be purged by the OS — so pins must own a stable copy rather
  * than just referencing wherever the media happened to come from. Also what
- * makes trip export possible, since that reads pin files back off disk. For
+ * makes drive export possible, since that reads pin files back off disk. For
  * videos, also generates and persists a static thumbnail frame, since
  * neither grids nor map markers can render a video file directly.
  */
@@ -51,7 +51,7 @@ export async function persistPinMedia(
   }
 }
 
-/** Best-effort cleanup of a pin's durable media file(s) — used when its trip is deleted. */
+/** Best-effort cleanup of a pin's durable media file(s) — used when its drive is deleted. */
 export async function deletePinMedia(uri: string, thumbnailUri?: string): Promise<void> {
   await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
   if (thumbnailUri) await FileSystem.deleteAsync(thumbnailUri, { idempotent: true }).catch(() => {});

@@ -19,7 +19,7 @@ export function distanceBetweenMeters(a: Coordinates, b: Coordinates): number {
 }
 
 /** Straight-line distance summed between consecutive points — not road distance. */
-export function calculateTripDistanceMeters(points: Coordinates[]): number {
+export function calculateRouteDistanceMeters(points: Coordinates[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {
     total += distanceBetweenMeters(points[i - 1]!, points[i]!);

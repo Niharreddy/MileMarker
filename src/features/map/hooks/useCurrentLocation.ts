@@ -8,6 +8,15 @@ export type CurrentLocationState = {
   coordinates: Coordinates | null;
   /** Ground speed in meters/second reported by the GPS fix, or null if unavailable. */
   speedMps: number | null;
+  /**
+   * When this fix was actually captured (ms since epoch), per the OS —
+   * not when the JS callback ran. `getCurrentPositionAsync` can return a
+   * cached fix (e.g. right after the app resumes/reopens and a fresh GPS
+   * lock hasn't happened yet), so this can be meaningfully older than
+   * `Date.now()`; consumers that record trip points should treat a stale
+   * fix as untrustworthy rather than assuming it just happened.
+   */
+  timestamp: number | null;
   isLoading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -25,6 +34,7 @@ export function useCurrentLocation(
 ): CurrentLocationState {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [speedMps, setSpeedMps] = useState<number | null>(null);
+  const [timestamp, setTimestamp] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
@@ -48,6 +58,7 @@ export function useCurrentLocation(
           longitude: position.coords.longitude,
         });
         setSpeedMps(position.coords.speed ?? null);
+        setTimestamp(position.timestamp);
         setError(null);
       }
     } catch (err) {
@@ -67,5 +78,5 @@ export function useCurrentLocation(
     return () => clearInterval(interval);
   }, [enabled, intervalMs, refresh]);
 
-  return { coordinates, speedMps, isLoading, error, refresh };
+  return { coordinates, speedMps, timestamp, isLoading, error, refresh };
 }

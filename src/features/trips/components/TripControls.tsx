@@ -1,31 +1,44 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { v4 as uuid } from "uuid";
 
 import { AppButton, AppText } from "@/components";
+import { useDriveStore } from "@/features/drives";
+import { useCurrentLocation, useLocationPermission } from "@/features/map";
 import { spacing, useAppTheme } from "@/theme";
 
-import { useBackgroundTripTracking } from "../hooks/useBackgroundTripTracking";
 import { useTripStore } from "../store/tripStore";
+import { AddTripCommentButton } from "./AddTripCommentButton";
+import { StartTripDialog } from "./StartTripDialog";
 
-/** Floating Start/Stop Trip + Past Trips buttons, anchored under the map. */
+/** Start/Stop Trip button + (while active) a Trip-comment button and a running drive count, anchored above the trips list. */
 export function TripControls() {
   const theme = useAppTheme();
-  const navigation = useNavigation();
-  const isRecording = useTripStore((state) => state.activeTrip !== null);
+  const locationPermission = useLocationPermission();
+  const { coordinates } = useCurrentLocation(locationPermission.isGranted);
+  const [isStartDialogVisible, setIsStartDialogVisible] = useState(false);
+
+  const activeTrip = useTripStore((state) => state.activeTrip);
   const hasPendingTrip = useTripStore((state) => state.pendingTrip !== null);
-  const isBackgroundTrackingActive = useTripStore((state) => state.isBackgroundTrackingActive);
-  const { startTrip, stopTrip } = useBackgroundTripTracking();
+  const stopTrip = useTripStore((state) => state.stopTrip);
+  const addNoteToActiveTrip = useTripStore((state) => state.addNoteToActiveTrip);
+
+  const activeDrive = useDriveStore((state) => state.activeDrive);
+  const pastDrives = useDriveStore((state) => state.pastDrives);
+
+  const driveCount = activeTrip
+    ? pastDrives.filter((drive) => drive.tripId === activeTrip.id).length +
+      (activeDrive?.tripId === activeTrip.id ? 1 : 0)
+    : 0;
 
   return (
     <View style={styles.container}>
-      {isRecording ? (
+      {activeTrip ? (
         <AppText variant="labelMedium" color="secondary" style={styles.status}>
-          {isBackgroundTrackingActive
-            ? "Recording — keeps going in the background."
-            : "Recording — keep the app open to keep tracking."}
+          {activeTrip.name} — {driveCount} {driveCount === 1 ? "drive" : "drives"} so far.
         </AppText>
       ) : null}
+
       <View
         style={[
           styles.row,
@@ -33,26 +46,30 @@ export function TripControls() {
         ]}
       >
         <AppButton
-          label={isRecording ? "Stop Trip" : "Start Trip"}
-          variant={isRecording ? "outline" : "primary"}
+          label={activeTrip ? "Stop Trip" : "Start Trip"}
+          variant={activeTrip ? "outline" : "primary"}
           disabled={hasPendingTrip}
-          onPress={isRecording ? stopTrip : startTrip}
+          onPress={activeTrip ? stopTrip : () => setIsStartDialogVisible(true)}
           style={styles.button}
         />
-        <AppButton
-          label="Past Trips"
-          variant="text"
-          onPress={() => navigation.navigate("Trips")}
-          style={styles.button}
-        />
+        {activeTrip ? (
+          <AddTripCommentButton
+            disabled={!coordinates}
+            onSubmitComment={(text) => {
+              if (!coordinates) return;
+              addNoteToActiveTrip({ id: uuid(), text, coordinates, createdAt: Date.now() });
+            }}
+          />
+        ) : null}
       </View>
+
+      <StartTripDialog visible={isStartDialogVisible} onClose={() => setIsStartDialogVisible(false)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
   status: {

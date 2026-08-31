@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
 import { AppButton, AppHeader, AppText, ScreenContainer } from "@/components";
-import { exportAllData, importDataFromFile } from "@/features/trips";
+import { exportAllData, importDataFromFile } from "@/features/drives";
 import { useSettingsStore, type ThemePreference, type UnitPreference } from "@/store";
 import { spacing } from "@/theme";
 
@@ -54,7 +54,7 @@ export function SettingsScreen() {
     try {
       const { importedCount } = await importDataFromFile();
       if (importedCount > 0) {
-        Alert.alert("Import complete", `Added ${importedCount} trip${importedCount === 1 ? "" : "s"}.`);
+        Alert.alert("Import complete", `Added ${importedCount} drive${importedCount === 1 ? "" : "s"}.`);
       }
     } catch (err) {
       Alert.alert("Import failed", err instanceof Error ? err.message : "Something went wrong.");
@@ -120,7 +120,7 @@ export function SettingsScreen() {
         Data
       </AppText>
       <AppText color="secondary" style={styles.helperText}>
-        Export every trip — routes, photos, and notes — to a file you can back up or move to another
+        Export every drive — routes, photos, and notes — to a file you can back up or move to another
         device, or import one back in.
       </AppText>
       <View style={styles.optionRow}>

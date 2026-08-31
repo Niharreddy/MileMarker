@@ -6,14 +6,15 @@ import { Controller, useForm } from "react-hook-form";
 import { AppButton, AppHeader, AppTextInput, ScreenContainer } from "@/components";
 import { spacing } from "@/theme";
 
-import { formatTripStartedAt } from "../formatters";
 import { saveTripSchema, type SaveTripFormValues } from "../schema";
 import { useTripStore } from "../store/tripStore";
 
 /**
  * Shown whenever `tripStore.pendingTrip` is set (i.e. right after "Stop
- * Trip"). Requires a name before the trip can be filed into past trips;
- * review/notes are optional. "Discard" drops the recording entirely.
+ * Trip"). The trip is already named (captured at Start Trip) — this is a
+ * chance to adjust the name and add/edit the description before it's filed
+ * into past trips. "Discard" drops the bundle entirely — its member drives
+ * are unaffected either way, since drives always live on their own.
  */
 export function SaveTripDialog() {
   const pendingTrip = useTripStore((state) => state.pendingTrip);
@@ -32,7 +33,7 @@ export function SaveTripDialog() {
 
   useEffect(() => {
     if (pendingTrip) {
-      reset({ name: `Trip on ${formatTripStartedAt(pendingTrip.startedAt)}`, review: "" });
+      reset({ name: pendingTrip.name, review: pendingTrip.review });
     }
   }, [pendingTrip, reset]);
 
@@ -62,7 +63,7 @@ export function SaveTripDialog() {
           name="review"
           render={({ field }) => (
             <AppTextInput
-              label="Notes / review (optional)"
+              label="Description (optional)"
               value={field.value}
               onChangeText={field.onChange}
               multiline

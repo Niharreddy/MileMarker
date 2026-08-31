@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-const TRIP_ALERTS_CHANNEL_ID = "milemarker-trip-alerts";
+const DRIVE_ALERTS_CHANNEL_ID = "milemarker-drive-alerts";
 
 /**
  * Governs whether a notification actually surfaces while the app is
@@ -20,28 +20,28 @@ Notifications.setNotificationHandler({
 });
 
 if (Platform.OS === "android") {
-  void Notifications.setNotificationChannelAsync(TRIP_ALERTS_CHANNEL_ID, {
-    name: "Trip alerts",
+  void Notifications.setNotificationChannelAsync(DRIVE_ALERTS_CHANNEL_ID, {
+    name: "Drive alerts",
     importance: Notifications.AndroidImportance.HIGH,
   });
 }
 
 /** Fired the moment auto-detect starts tracking a drive on its own. */
-export async function notifyTripAutoStarted() {
+export async function notifyDriveAutoStarted() {
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Trip detected",
-      body: "Looks like you're driving — Mile Marker started tracking this trip automatically.",
+      title: "Drive detected",
+      body: "Looks like you're driving — Mile Marker started tracking this drive automatically.",
     },
     trigger: null,
   });
 }
 
-/** Fired once an active trip has sat stationary long enough to ask whether to keep tracking it. */
+/** Fired once an active drive has sat stationary long enough to ask whether to keep tracking it. */
 export async function notifyStopPrompt() {
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Still on this trip?",
+      title: "Still on this drive?",
       body: "You've been stopped for about 10 minutes. Open Mile Marker to keep going or stop tracking.",
     },
     trigger: null,

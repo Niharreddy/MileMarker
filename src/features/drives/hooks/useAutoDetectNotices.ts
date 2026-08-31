@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 
-import { useTripStore } from "../store/tripStore";
+import { useDriveStore } from "../store/driveStore";
 
 const POLL_INTERVAL_MS = 20_000;
 
 /**
- * The background location task can set "trip auto-started" / "you've been
+ * The background location task can set "drive auto-started" / "you've been
  * stopped a while" flags from a headless JS context this app's Zustand
  * store never observes directly. This bridges them in: once on mount,
  * whenever the app returns to the foreground, and on a light poll while
@@ -14,7 +14,7 @@ const POLL_INTERVAL_MS = 20_000;
  * the whole time). Mount once near the app root.
  */
 export function useAutoDetectNotices() {
-  const sync = useTripStore((state) => state.syncAutoDetectNotices);
+  const sync = useDriveStore((state) => state.syncAutoDetectNotices);
 
   useEffect(() => {
     sync();

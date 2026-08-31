@@ -4,17 +4,16 @@ import { StyleSheet, View } from "react-native";
 import { AppText } from "@/components";
 import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
+import { calculateRouteDistanceMeters, formatDistance, formatMinutes } from "@/utils";
 
-import { calculateTripDistanceMeters, formatDistance } from "../distance";
-import { formatMinutes } from "../formatters";
-import type { Trip } from "../types";
+import type { Drive } from "../types";
 
-export type TripRecordingStatsProps = {
-  trip: Trip;
+export type DriveRecordingStatsProps = {
+  drive: Drive;
 };
 
-/** Live elapsed time / distance / photo count for the trip currently being recorded. */
-export function TripRecordingStats({ trip }: TripRecordingStatsProps) {
+/** Live elapsed time / distance / photo count for the drive currently being recorded. */
+export function DriveRecordingStats({ drive }: DriveRecordingStatsProps) {
   const theme = useAppTheme();
   const unitPreference = useSettingsStore((state) => state.unitPreference);
   const [now, setNow] = useState(() => Date.now());
@@ -24,14 +23,14 @@ export function TripRecordingStats({ trip }: TripRecordingStatsProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const elapsedMinutes = Math.max(0, Math.floor((now - trip.startedAt) / 60_000));
-  const distanceMeters = calculateTripDistanceMeters(trip.points);
+  const elapsedMinutes = Math.max(0, Math.floor((now - drive.startedAt) / 60_000));
+  const distanceMeters = calculateRouteDistanceMeters(drive.points);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.palette.surfaceVariant }]}>
       <Stat label="Elapsed" value={formatMinutes(elapsedMinutes)} />
       <Stat label="Distance" value={formatDistance(distanceMeters, unitPreference)} />
-      <Stat label="Photos" value={String(trip.pins.length)} />
+      <Stat label="Photos" value={String(drive.pins.length)} />
     </View>
   );
 }

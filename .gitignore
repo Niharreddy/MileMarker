@@ -16,6 +16,7 @@ web-build
 *.key
 *.mobileprovision
 *.orig.*
+*.pem
 
 # Play Console service account credentials (see SUBMIT_SETUP.md)
 google-play-service-account.json

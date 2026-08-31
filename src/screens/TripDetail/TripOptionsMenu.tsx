@@ -9,10 +9,10 @@ import { useAppTheme } from "@/theme";
 
 export type TripOptionsMenuProps = {
   tripId: string;
-  navigation: NativeStackNavigationProp<RootStackParamList, "TripDetail">;
+  navigation: NativeStackNavigationProp<RootStackParamList, "Trip">;
 };
 
-/** Native-header "..." menu for Trip Detail — currently just Delete Trip. */
+/** Native-header "..." menu for Trip Detail — Delete Trip only (its drives are unbundled, never deleted). */
 export function TripOptionsMenu({ tripId, navigation }: TripOptionsMenuProps) {
   const theme = useAppTheme();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
@@ -22,7 +22,7 @@ export function TripOptionsMenu({ tripId, navigation }: TripOptionsMenuProps) {
     setIsMenuVisible(false);
     Alert.alert(
       "Delete this trip?",
-      "This permanently removes the trip, its route, photos, and notes.",
+      "This removes the trip and its comments. Its drives aren't deleted — they'll just no longer be bundled together.",
       [
         { text: "Cancel", style: "cancel" },
         {

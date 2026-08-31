@@ -1,0 +1,15 @@
+export { findGeotaggedPhotosForDrive } from "./autoMatchPhotos";
+export { AutoDriveDetection } from "./components/AutoDriveDetection";
+export { exportAllData, importDataFromFile } from "./dataTransfer";
+export { LifetimeStats } from "./components/LifetimeStats";
+export { SaveDriveDialog } from "./components/SaveDriveDialog";
+export { DriveControls } from "./components/DriveControls";
+export { DriveRecordingStats } from "./components/DriveRecordingStats";
+export { DriveSearchBar } from "./components/DriveSearchBar";
+export { useBackgroundDriveTracking } from "./hooks/useBackgroundDriveTracking";
+export { useDriveRecorder } from "./hooks/useDriveRecorder";
+export { persistPinMedia } from "./photoStorage";
+export type { SaveDriveFormValues } from "./schema";
+export { useDriveStore } from "./store/driveStore";
+export type { DriveState } from "./store/driveStore";
+export type { Drive, DriveNote, DrivePoint } from "./types";

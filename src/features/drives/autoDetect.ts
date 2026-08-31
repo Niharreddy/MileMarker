@@ -1,38 +1,38 @@
 import { StorageKeys } from "@/constants/storageKeys";
 import { appStorage } from "@/services/storage";
 import { useSettingsStore } from "@/store";
+import { distanceBetweenMeters } from "@/utils";
 
-import { distanceBetweenMeters } from "./distance";
-import { notifyStopPrompt, notifyTripAutoStarted } from "./notifications";
-import { recordTripPoint } from "./recordTripPoint";
-import { useTripStore } from "./store/tripStore";
-import type { TripPoint } from "./types";
+import { notifyDriveAutoStarted, notifyStopPrompt } from "./notifications";
+import { recordDrivePoint } from "./recordDrivePoint";
+import { useDriveStore } from "./store/driveStore";
+import type { DrivePoint } from "./types";
 
 /** Sustained speed above this is treated as driving, not walking/jogging. ~10 mph. */
 const DRIVING_SPEED_MPS = 4.5;
-/** Consecutive above-threshold samples required before auto-starting a trip. */
+/** Consecutive above-threshold samples required before auto-starting a drive. */
 const DRIVING_CONFIRM_SAMPLES = 2;
 /** At/below this is treated as "not moving". ~2 mph, loose enough to absorb GPS jitter. */
 const STOP_SPEED_MPS = 1;
-/** How long a trip has to sit stationary before we ask whether to stop tracking it. */
+/** How long a drive has to sit stationary before we ask whether to stop tracking it. */
 const STOP_PROMPT_MINUTES = 10;
 
-function readLastSample(): TripPoint | null {
+function readLastSample(): DrivePoint | null {
   const raw = appStorage.getString(StorageKeys.autoDetectLastSample);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as TripPoint;
+    return JSON.parse(raw) as DrivePoint;
   } catch {
     return null;
   }
 }
 
-function writeLastSample(sample: TripPoint) {
+function writeLastSample(sample: DrivePoint) {
   appStorage.set(StorageKeys.autoDetectLastSample, JSON.stringify(sample));
 }
 
 /** Prefers the GPS fix's own speed reading; falls back to distance/time between the last two fixes. */
-function estimateSpeedMps(sample: TripPoint, reportedSpeedMps: number | null): number | null {
+function estimateSpeedMps(sample: DrivePoint, reportedSpeedMps: number | null): number | null {
   if (reportedSpeedMps !== null && reportedSpeedMps >= 0) return reportedSpeedMps;
 
   const last = readLastSample();
@@ -42,7 +42,7 @@ function estimateSpeedMps(sample: TripPoint, reportedSpeedMps: number | null): n
   return distanceBetweenMeters(last, sample) / dtSeconds;
 }
 
-function updateDrivingDetection(sample: TripPoint, reportedSpeedMps: number | null) {
+function updateDrivingDetection(sample: DrivePoint, reportedSpeedMps: number | null) {
   const speedMps = estimateSpeedMps(sample, reportedSpeedMps);
   const previousSample = readLastSample();
   writeLastSample(sample);
@@ -65,17 +65,17 @@ function updateDrivingDetection(sample: TripPoint, reportedSpeedMps: number | nu
   }
 
   appStorage.set(StorageKeys.autoDetectConsecutiveDriving, 0);
-  useTripStore.getState().startTrip();
+  useDriveStore.getState().startDrive();
   // Back-fill the sample that first crossed the driving threshold (not just
   // the one that confirmed it), so the recorded route starts from where the
   // movement was actually detected instead of a beat late.
-  if (previousSample) recordTripPoint(previousSample);
-  recordTripPoint(sample);
+  if (previousSample) recordDrivePoint(previousSample);
+  recordDrivePoint(sample);
   appStorage.set(StorageKeys.autoStartNoticePending, true);
-  void notifyTripAutoStarted();
+  void notifyDriveAutoStarted();
 }
 
-function updateStopDetection(sample: TripPoint, reportedSpeedMps: number | null) {
+function updateStopDetection(sample: DrivePoint, reportedSpeedMps: number | null) {
   const speedMps = estimateSpeedMps(sample, reportedSpeedMps);
   writeLastSample(sample);
 
@@ -102,23 +102,23 @@ function updateStopDetection(sample: TripPoint, reportedSpeedMps: number | null)
 /**
  * Single entry point for every raw location fix, from both the always-on
  * background task and foreground polling (see `useLocationMonitoring`).
- * Branches on whether a trip is currently active:
+ * Branches on whether a drive is currently active:
  *  - active: durably record the point, and watch for a long stop so a
- *    scenic-viewpoint stop doesn't silently fragment the trip.
- *  - idle: watch for sustained driving speed and auto-start a trip.
+ *    scenic-viewpoint stop doesn't silently fragment the drive.
+ *  - idle: watch for sustained driving speed and auto-start a drive.
  */
-export function handleLocationSample(sample: TripPoint, reportedSpeedMps: number | null) {
-  const tripId = appStorage.getString(StorageKeys.activeTripId);
+export function handleLocationSample(sample: DrivePoint, reportedSpeedMps: number | null) {
+  const driveId = appStorage.getString(StorageKeys.activeDriveId);
 
-  if (tripId) {
-    recordTripPoint(sample);
+  if (driveId) {
+    recordDrivePoint(sample);
     updateStopDetection(sample, reportedSpeedMps);
   } else {
     updateDrivingDetection(sample, reportedSpeedMps);
   }
 }
 
-/** Clears the rolling detection window — call whenever a trip starts or stops so detection begins fresh. */
+/** Clears the rolling detection window — call whenever a drive starts or stops so detection begins fresh. */
 export function resetAutoDetectState() {
   appStorage.delete(StorageKeys.autoDetectLastSample);
   appStorage.delete(StorageKeys.autoDetectConsecutiveDriving);

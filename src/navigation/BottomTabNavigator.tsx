@@ -2,7 +2,7 @@ import React from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-import { HomeScreen, MemoriesScreen, SettingsScreen, TripsScreen } from "@/screens";
+import { DrivesScreen, HomeScreen, MemoriesScreen, SettingsScreen, TripsScreen } from "@/screens";
 import { useAppTheme } from "@/theme";
 
 import type { RootTabParamList } from "./types";
@@ -13,13 +13,14 @@ type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
 const TAB_ICONS: Record<keyof RootTabParamList, { focused: IconName; unfocused: IconName }> = {
   Home: { focused: "map", unfocused: "map-outline" },
-  Trips: { focused: "road-variant", unfocused: "road-variant" },
+  Drives: { focused: "road-variant", unfocused: "road-variant" },
+  Trips: { focused: "bag-suitcase", unfocused: "bag-suitcase-outline" },
   Memories: { focused: "image-multiple", unfocused: "image-multiple-outline" },
   Settings: { focused: "cog", unfocused: "cog-outline" },
 };
 
 /**
- * The app's primary navigation surface. Adding a fifth tab is a matter of
+ * The app's primary navigation surface. Adding a sixth tab is a matter of
  * adding a route here + to `RootTabParamList` — each tab screen can later
  * grow its own stack navigator without changing this file.
  */
@@ -49,6 +50,7 @@ export function BottomTabNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Drives" component={DrivesScreen} />
       <Tab.Screen name="Trips" component={TripsScreen} />
       <Tab.Screen name="Memories" component={MemoriesScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />

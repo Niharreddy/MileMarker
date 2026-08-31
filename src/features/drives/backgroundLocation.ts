@@ -6,7 +6,7 @@ import { BACKGROUND_LOCATION_TASK } from "./backgroundLocationTask";
 
 /**
  * Starts the OS-level location subscription backing `BACKGROUND_LOCATION_TASK`.
- * One subscription serves both driving auto-detection and active-trip
+ * One subscription serves both driving auto-detection and active-drive
  * recording — see `useLocationMonitoring` for when this runs, and
  * `handleLocationSample` for how each fix is interpreted. Runs a persistent
  * Android foreground-service notification while active — without it,
@@ -24,7 +24,7 @@ export async function startLocationMonitoring() {
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: "Mile Marker",
-      notificationBody: "Watching for drives and tracking any trip in progress.",
+      notificationBody: "Watching for drives and tracking any drive in progress.",
     },
   });
 }

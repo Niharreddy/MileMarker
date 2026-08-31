@@ -2,7 +2,7 @@ import React from "react";
 
 import { useAutoDetectNotices } from "../hooks/useAutoDetectNotices";
 import { useLocationMonitoring } from "../hooks/useLocationMonitoring";
-import { AutoStartTripDialog } from "./AutoStartTripDialog";
+import { AutoStartDriveDialog } from "./AutoStartDriveDialog";
 import { StopPromptDialog } from "./StopPromptDialog";
 
 /**
@@ -11,13 +11,13 @@ import { StopPromptDialog } from "./StopPromptDialog";
  * Mounted once in `RootNavigator` so it keeps running regardless of which
  * tab/screen is active.
  */
-export function AutoTripDetection() {
+export function AutoDriveDetection() {
   useLocationMonitoring();
   useAutoDetectNotices();
 
   return (
     <>
-      <AutoStartTripDialog />
+      <AutoStartDriveDialog />
       <StopPromptDialog />
     </>
   );

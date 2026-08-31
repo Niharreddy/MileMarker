@@ -4,6 +4,16 @@ import { v4 as uuid } from "uuid";
 
 import { AppHeader, LoadingIndicator, ScreenContainer } from "@/components";
 import {
+  DriveControls,
+  DriveRecordingStats,
+  DriveSearchBar,
+  LifetimeStats,
+  persistPinMedia,
+  SaveDriveDialog,
+  useDriveRecorder,
+  useDriveStore,
+} from "@/features/drives";
+import {
   AddNoteButton,
   AddPinButton,
   PermissionGate,
@@ -11,29 +21,19 @@ import {
   useCurrentLocation,
   useLocationPermission,
 } from "@/features/map";
-import {
-  LifetimeStats,
-  persistPinMedia,
-  SaveTripDialog,
-  TripControls,
-  TripRecordingStats,
-  TripSearchBar,
-  useTripRecorder,
-  useTripStore,
-} from "@/features/trips";
 import { spacing, useAppTheme } from "@/theme";
 
 export function HomeScreen() {
   const theme = useAppTheme();
   const locationPermission = useLocationPermission();
-  const { coordinates, speedMps } = useCurrentLocation(locationPermission.isGranted);
+  const { coordinates, speedMps, timestamp } = useCurrentLocation(locationPermission.isGranted);
 
-  const activeTrip = useTripStore((state) => state.activeTrip);
-  const addPinToActiveTrip = useTripStore((state) => state.addPinToActiveTrip);
-  const addNoteToActiveTrip = useTripStore((state) => state.addNoteToActiveTrip);
-  const isBackgroundTrackingActive = useTripStore((state) => state.isBackgroundTrackingActive);
+  const activeDrive = useDriveStore((state) => state.activeDrive);
+  const addPinToActiveDrive = useDriveStore((state) => state.addPinToActiveDrive);
+  const addNoteToActiveDrive = useDriveStore((state) => state.addNoteToActiveDrive);
+  const isBackgroundTrackingActive = useDriveStore((state) => state.isBackgroundTrackingActive);
   // The always-on background subscription already covers this — don't double-feed samples.
-  useTripRecorder(coordinates, speedMps, !isBackgroundTrackingActive);
+  useDriveRecorder(coordinates, speedMps, timestamp, !isBackgroundTrackingActive);
 
   if (locationPermission.isChecking) {
     return (
@@ -60,17 +60,17 @@ export function HomeScreen() {
   return (
     <ScreenContainer>
       <AppHeader title="Home" />
-      <TripSearchBar />
-      {activeTrip ? null : <LifetimeStats />}
+      <DriveSearchBar />
+      {activeDrive ? null : <LifetimeStats />}
 
       <View style={[styles.mapBox, { borderColor: theme.palette.border }]}>
         <RouteMap
           currentLocation={coordinates}
-          pins={activeTrip?.pins ?? []}
-          notes={activeTrip?.notes ?? []}
-          routeCoordinates={activeTrip?.points}
+          pins={activeDrive?.pins ?? []}
+          notes={activeDrive?.notes ?? []}
+          routeCoordinates={activeDrive?.points}
         />
-        {activeTrip ? (
+        {activeDrive ? (
           <>
             <AddPinButton
               disabled={!coordinates}
@@ -78,7 +78,7 @@ export function HomeScreen() {
                 if (!coordinates) return;
                 const id = uuid();
                 const { uri: persistedUri, thumbnailUri } = await persistPinMedia(uri, id, mediaType);
-                addPinToActiveTrip({
+                addPinToActiveDrive({
                   id,
                   uri: persistedUri,
                   mediaType,
@@ -92,17 +92,17 @@ export function HomeScreen() {
               disabled={!coordinates}
               onSubmitNote={(text) => {
                 if (!coordinates) return;
-                addNoteToActiveTrip({ id: uuid(), text, coordinates, createdAt: Date.now() });
+                addNoteToActiveDrive({ id: uuid(), text, coordinates, createdAt: Date.now() });
               }}
             />
           </>
         ) : null}
       </View>
 
-      {activeTrip ? <TripRecordingStats trip={activeTrip} /> : null}
+      {activeDrive ? <DriveRecordingStats drive={activeDrive} /> : null}
 
-      <TripControls />
-      <SaveTripDialog />
+      <DriveControls />
+      <SaveDriveDialog />
     </ScreenContainer>
   );
 }
