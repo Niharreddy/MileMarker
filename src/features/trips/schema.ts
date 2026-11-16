@@ -1,9 +1,8 @@
 import { z } from "zod";
 
-/** Shown when starting a Trip — captured up front, before recording begins. */
+/** Shown when starting a Trip — captured up front, before recording begins. The optional date range is picked via a native date picker, not typed, so it isn't part of this schema. */
 export const startTripSchema = z.object({
   name: z.string().trim().min(1, "Give this trip a name"),
-  dateLabel: z.string().trim().max(60, "Keep it short"),
 });
 
 export type StartTripFormValues = z.infer<typeof startTripSchema>;

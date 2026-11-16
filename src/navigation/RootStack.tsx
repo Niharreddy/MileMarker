@@ -2,7 +2,10 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { DriveDetailScreen, DriveOptionsMenu } from "@/screens/DriveDetail";
+import { StatsScreen } from "@/screens/Stats";
 import { TripDetailScreen, TripOptionsMenu } from "@/screens/TripDetail";
+
+import { useAppTheme } from "@/theme";
 
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import type { RootStackParamList } from "./types";
@@ -18,8 +21,19 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * already themes itself from `navigationLightTheme`/`navigationDarkTheme`.
  */
 export function RootStack() {
+  const theme = useAppTheme();
+
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        // Blend the header into the screen instead of a separate bar with a divider line.
+        headerStyle: { backgroundColor: theme.palette.background },
+        headerShadowVisible: false,
+        headerTintColor: theme.palette.textPrimary,
+        headerTitleStyle: { fontSize: 16, fontWeight: "600" },
+        headerBackTitleVisible: false,
+      }}
+    >
       <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
       <Stack.Screen
         name="Drive"
@@ -37,6 +51,7 @@ export function RootStack() {
           headerRight: () => <TripOptionsMenu tripId={route.params.tripId} navigation={navigation} />,
         })}
       />
+      <Stack.Screen name="Stats" component={StatsScreen} options={{ title: "Your stats" }} />
     </Stack.Navigator>
   );
 }

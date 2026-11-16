@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AppText } from "@/components";
@@ -17,22 +17,36 @@ export type WelcomeScreenProps = {
  * Always shown before the main tab navigator (see `RootNavigator`) — not
  * gated by a "seen it once" flag, so it's a deliberate re-entry moment
  * every launch rather than a one-time onboarding step. Auto-advances after
- * a fixed delay instead of waiting for a tap, so it reads as a beat, not a gate.
+ * a fixed delay instead of waiting for a tap, so it reads as a beat, not a
+ * gate — but a tap anywhere skips straight past it for anyone in a hurry.
  */
 export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
   const theme = useAppTheme();
   // Picked once per mount (i.e. once per app launch), not per render.
   const [quote] = useState(getRandomQuote);
 
+  const fade = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const timer = setTimeout(onGetStarted, AUTO_ADVANCE_MS);
     return () => clearTimeout(timer);
   }, [onGetStarted]);
 
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, [fade]);
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.palette.background }]}>
-      <View style={styles.content}>
-        <MaterialCommunityIcons name="compass-outline" size={56} color={theme.palette.primary} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Continue"
+      onPress={onGetStarted}
+      style={[styles.container, { backgroundColor: theme.palette.background }]}
+    >
+      <Animated.View style={[styles.content, { opacity: fade }]}>
+        <View style={[styles.iconCircle, { backgroundColor: theme.palette.primaryContainer }]}>
+          <MaterialCommunityIcons name="compass-outline" size={52} color={theme.palette.primary} />
+        </View>
 
         <AppText variant="displayMedium" style={styles.headline}>
           Remember every road.{"\n"}Remember every place.
@@ -55,8 +69,12 @@ export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
             — {quote.author}
           </AppText>
         </View>
-      </View>
-    </View>
+      </Animated.View>
+
+      <AppText variant="labelMedium" color="disabled" style={styles.skipHint}>
+        Tap anywhere to continue
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -71,6 +89,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.md,
   },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  skipHint: {
+    textAlign: "center",
+    paddingBottom: spacing.lg,
+  },
   headline: {
     textAlign: "center",
   },
@@ -80,7 +110,7 @@ const styles = StyleSheet.create({
   quoteCard: {
     marginTop: spacing.lg,
     padding: spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     gap: spacing.xxs,
     alignItems: "center",

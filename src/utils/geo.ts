@@ -47,3 +47,16 @@ export function formatDistance(meters: number, unit: UnitPreference): string {
   if (meters < 1000) return `${Math.round(meters)} m`;
   return `${(meters / 1000).toFixed(1)} km`;
 }
+
+/** Average speed over a whole recording; `null` when there's no usable distance or duration to divide. */
+export function averageSpeedMps(distanceMeters: number, startedAt: number, endedAt: number | null): number | null {
+  const seconds = ((endedAt ?? Date.now()) - startedAt) / 1000;
+  if (distanceMeters <= 0 || seconds <= 0) return null;
+  return distanceMeters / seconds;
+}
+
+export function formatSpeed(metersPerSecond: number | null, unit: UnitPreference): string {
+  if (metersPerSecond === null) return "—";
+  if (unit === "imperial") return `${Math.round((metersPerSecond * 3600) / METERS_PER_MILE)} mph`;
+  return `${Math.round(metersPerSecond * 3.6)} km/h`;
+}

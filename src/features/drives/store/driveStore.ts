@@ -14,6 +14,7 @@ import {
   persistDriveEnded,
   persistDriveNote,
   persistDrivePin,
+  persistDrivePinDeleted,
   persistDriveTripId,
   persistNewDrive,
 } from "../persistence";
@@ -34,10 +35,16 @@ export type DriveState = {
   saveDrive: (details: { name: string; review: string }) => void;
   discardPendingDrive: () => void;
   deleteDrive: (id: string) => void;
+  /** Renames / re-describes a past drive anytime from Drive Detail — distinct from `saveDrive`, which only applies to a just-stopped `pendingDrive`. */
+  updateDriveDetails: (id: string, details: { name: string; review: string }) => void;
   addPinToActiveDrive: (pin: Pin) => void;
   /** Bulk-adds pins to the just-stopped pending drive — used by geotag auto-matching after Stop Drive. */
   addPinsToPendingDrive: (pins: Pin[]) => void;
   addNoteToActiveDrive: (note: DriveNote) => void;
+  /** Adds a photo/video pin to a past drive, from Drive Detail — separate from `addPinToActiveDrive`, which only applies while recording. */
+  addPinToDrive: (driveId: string, pin: Pin) => void;
+  /** Removes a single pin from a past drive, deleting its durable media file too. */
+  removePinFromDrive: (driveId: string, pinId: string) => void;
   /** Adds a not-yet-bundled drive to an existing Trip. No-ops if the drive is already part of one. */
   addDriveToTrip: (driveId: string, tripId: string) => void;
   /** Unbundles a drive from whatever Trip it's part of. No-ops if it isn't part of one. */
@@ -138,6 +145,15 @@ export const useDriveStore = create<DriveState>()((set, get) => ({
     for (const pin of drive.pins) void deletePinMedia(pin.uri, pin.thumbnailUri);
   },
 
+  updateDriveDetails: (id, { name, review }) => {
+    const { pastDrives } = get();
+    if (!pastDrives.some((candidate) => candidate.id === id)) return;
+    persistDriveDetails(id, name, review);
+    set({
+      pastDrives: pastDrives.map((candidate) => (candidate.id === id ? { ...candidate, name, review } : candidate)),
+    });
+  },
+
   addPinToActiveDrive: (pin) => {
     const { activeDrive } = get();
     if (!activeDrive) return;
@@ -157,6 +173,33 @@ export const useDriveStore = create<DriveState>()((set, get) => ({
     if (!activeDrive) return;
     persistDriveNote(activeDrive.id, note);
     set({ activeDrive: { ...activeDrive, notes: [...activeDrive.notes, note] } });
+  },
+
+  addPinToDrive: (driveId, pin) => {
+    const { pastDrives } = get();
+    if (!pastDrives.some((candidate) => candidate.id === driveId)) return;
+    persistDrivePin(driveId, pin);
+    set({
+      pastDrives: pastDrives.map((candidate) =>
+        candidate.id === driveId ? { ...candidate, pins: [...candidate.pins, pin] } : candidate
+      ),
+    });
+  },
+
+  removePinFromDrive: (driveId, pinId) => {
+    const { pastDrives } = get();
+    const drive = pastDrives.find((candidate) => candidate.id === driveId);
+    const pin = drive?.pins.find((candidate) => candidate.id === pinId);
+    if (!drive || !pin) return;
+    persistDrivePinDeleted(pinId);
+    set({
+      pastDrives: pastDrives.map((candidate) =>
+        candidate.id === driveId
+          ? { ...candidate, pins: candidate.pins.filter((candidatePin) => candidatePin.id !== pinId) }
+          : candidate
+      ),
+    });
+    void deletePinMedia(pin.uri, pin.thumbnailUri);
   },
 
   addDriveToTrip: (driveId, tripId) => {

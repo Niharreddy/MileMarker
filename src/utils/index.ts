@@ -1,3 +1,19 @@
 export { assertNever } from "./assertNever";
-export { formatDuration, formatMinutes, formatStartedAt } from "./dateFormat";
-export { calculateRouteDistanceMeters, distanceBetweenMeters, formatDistance, nearestDistanceMeters } from "./geo";
+export {
+  formatDate,
+  formatDuration,
+  formatElapsed,
+  formatMinutes,
+  formatMonthYear,
+  formatStartedAt,
+  formatTime,
+  groupByMonth,
+} from "./dateFormat";
+export {
+  averageSpeedMps,
+  calculateRouteDistanceMeters,
+  distanceBetweenMeters,
+  formatDistance,
+  formatSpeed,
+  nearestDistanceMeters,
+} from "./geo";

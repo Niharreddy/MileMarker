@@ -1,4 +1,4 @@
-import type { Note } from "@/features/map";
+import type { Note, Pin } from "@/features/map";
 
 export type TripNote = Note;
 
@@ -18,4 +18,6 @@ export type Trip = {
   startedAt: number;
   endedAt: number | null;
   notes: TripNote[];
+  /** Photos/videos added directly to the trip (not through a specific drive) — geotagged at the moment they're added. */
+  pins: Pin[];
 };

@@ -1,230 +1,308 @@
 import React, { useMemo, useState } from "react";
-import { FlatList, Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { v4 as uuid } from "uuid";
 
-import { AppButton, AppText, AppTextInput, ScreenContainer } from "@/components";
-import { useDriveStore } from "@/features/drives";
-import { getPinThumbnailUri, MediaViewerModal, RouteMap } from "@/features/map";
+import {
+  AppText,
+  Card,
+  EditDetailsDialog,
+  EmptyState,
+  ScreenContainer,
+  SectionHeader,
+  StatRow,
+} from "@/components";
+import { DriveCard, persistPinMedia, useDriveStore } from "@/features/drives";
+import {
+  AddMediaButton,
+  MediaGrid,
+  MediaViewerModal,
+  RouteMap,
+  type Pin,
+} from "@/features/map";
+import { ShareSummaryModal } from "@/features/share";
 import { useTripStore } from "@/features/trips";
 import type { RootStackParamList } from "@/navigation";
-import { spacing, useAppTheme } from "@/theme";
-import { formatDuration, formatStartedAt } from "@/utils";
+import { useSettingsStore } from "@/store";
+import { radii, spacing, useAppTheme } from "@/theme";
+import { calculateRouteDistanceMeters, formatDate, formatDistance, formatMinutes, formatStartedAt } from "@/utils";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Trip">;
+
+type PinSource = { type: "trip" } | { type: "drive"; driveId: string };
+type SourcedPin = { pin: Pin; source: PinSource };
 
 export function TripDetailScreen({ route }: Props) {
   const theme = useAppTheme();
   const navigation = useNavigation();
+  const unitPreference = useSettingsStore((state) => state.unitPreference);
   const trip = useTripStore((state) => state.pastTrips.find((candidate) => candidate.id === route.params.tripId));
-  const updateTripReview = useTripStore((state) => state.updateTripReview);
+  const updateTripDetails = useTripStore((state) => state.updateTripDetails);
+  const addPinToTrip = useTripStore((state) => state.addPinToTrip);
+  const removePinFromTrip = useTripStore((state) => state.removePinFromTrip);
   const allDrives = useDriveStore((state) => state.pastDrives);
+  const removePinFromDrive = useDriveStore((state) => state.removePinFromDrive);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [descriptionDraft, setDescriptionDraft] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const memberDrives = useMemo(
-    () => allDrives.filter((drive) => drive.tripId === trip?.id),
+    () =>
+      allDrives.filter((drive) => drive.tripId === trip?.id).sort((a, b) => a.startedAt - b.startedAt),
     [allDrives, trip?.id]
   );
-  const pins = useMemo(() => memberDrives.flatMap((drive) => drive.pins), [memberDrives]);
+  const sourcedPins = useMemo<SourcedPin[]>(() => {
+    if (!trip) return [];
+    const ownPins = trip.pins.map((pin) => ({ pin, source: { type: "trip" as const } }));
+    const drivePins = memberDrives.flatMap((drive) =>
+      drive.pins.map((pin) => ({ pin, source: { type: "drive" as const, driveId: drive.id } }))
+    );
+    return [...ownPins, ...drivePins].sort((a, b) => b.pin.createdAt - a.pin.createdAt);
+  }, [trip, memberDrives]);
+  const pins = useMemo(() => sourcedPins.map((sourced) => sourced.pin), [sourcedPins]);
   const routes = useMemo(
     () => memberDrives.map((drive) => ({ id: drive.id, coordinates: drive.points })),
     [memberDrives]
   );
+  const { totalDistanceMeters, drivingMinutes } = useMemo(() => {
+    let totalDistanceMeters = 0;
+    let drivingMs = 0;
+    for (const drive of memberDrives) {
+      totalDistanceMeters += calculateRouteDistanceMeters(drive.points);
+      drivingMs += (drive.endedAt ?? drive.startedAt) - drive.startedAt;
+    }
+    return { totalDistanceMeters, drivingMinutes: Math.round(drivingMs / 60_000) };
+  }, [memberDrives]);
 
   if (!trip) {
     return (
-      <ScreenContainer>
-        <AppText color="secondary">This trip could not be found.</AppText>
+      <ScreenContainer edges={["bottom", "left", "right"]}>
+        <EmptyState icon="map-search-outline" title="Trip not found" message="This trip may have been deleted." />
       </ScreenContainer>
     );
   }
 
-  const openDescriptionEditor = () => {
-    setDescriptionDraft(trip.review);
-    setIsEditingDescription(true);
+  const handleRemovePin = (index: number) => {
+    const sourced = sourcedPins[index];
+    if (!sourced) return;
+    Alert.alert("Remove this photo/video?", "This permanently deletes it.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () =>
+          sourced.source.type === "trip"
+            ? removePinFromTrip(trip.id, sourced.pin.id)
+            : removePinFromDrive(sourced.source.driveId, sourced.pin.id),
+      },
+    ]);
   };
 
-  const saveDescription = () => {
-    updateTripReview(trip.id, descriptionDraft.trim());
-    setIsEditingDescription(false);
-  };
+  const dateRange =
+    trip.dateLabel.trim() ||
+    (trip.endedAt && formatDate(trip.endedAt) !== formatDate(trip.startedAt)
+      ? `${formatDate(trip.startedAt)} – ${formatDate(trip.endedAt)}`
+      : formatDate(trip.startedAt));
 
   return (
-    <ScreenContainer scrollable>
-      <AppText variant="titleLarge">{trip.name}</AppText>
-
-      <Pressable onPress={openDescriptionEditor} style={styles.descriptionRow}>
-        <AppText color={trip.review.trim() ? "primary" : "secondary"}>
-          {trip.review.trim() ? trip.review : "Add a description…"}
-        </AppText>
-      </Pressable>
-
-      <AppText color="secondary" style={styles.meta}>
-        {trip.dateLabel.trim() ? `${trip.dateLabel} · ` : ""}
-        {formatStartedAt(trip.startedAt)} · {formatDuration(trip.startedAt, trip.endedAt)} · {memberDrives.length}{" "}
-        {memberDrives.length === 1 ? "drive" : "drives"}
-      </AppText>
+    <ScreenContainer scrollable edges={["bottom", "left", "right"]}>
+      <View style={styles.titleRow}>
+        <View style={styles.titles}>
+          <AppText variant="headlineMedium">{trip.name}</AppText>
+          <AppText color="secondary">{dateRange}</AppText>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Share trip summary"
+          onPress={() => setIsSharing(true)}
+          hitSlop={10}
+          style={[styles.editButton, { backgroundColor: theme.palette.primaryContainer }]}
+        >
+          <MaterialCommunityIcons name="share-variant" size={18} color={theme.palette.onPrimaryContainer} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Edit trip"
+          onPress={() => setIsEditing(true)}
+          hitSlop={10}
+          style={[styles.editButton, { backgroundColor: theme.palette.surfaceVariant }]}
+        >
+          <MaterialCommunityIcons name="pencil-outline" size={18} color={theme.palette.textPrimary} />
+        </Pressable>
+      </View>
 
       <View style={[styles.mapContainer, { borderColor: theme.palette.border }]}>
-        <RouteMap currentLocation={null} pins={pins} notes={trip.notes} routes={routes} />
+        <RouteMap
+          currentLocation={null}
+          pins={pins}
+          notes={trip.notes}
+          routes={routes}
+          onPinPress={(pin) => {
+            const index = pins.findIndex((candidate) => candidate.id === pin.id);
+            if (index >= 0) setViewerIndex(index);
+          }}
+        />
       </View>
+
+      <Card>
+        <StatRow
+          items={[
+            { icon: "road-variant", label: memberDrives.length === 1 ? "Drive" : "Drives", value: String(memberDrives.length) },
+            { icon: "map-marker-distance", label: "Distance", value: formatDistance(totalDistanceMeters, unitPreference) },
+            { icon: "steering", label: "Driving", value: formatMinutes(drivingMinutes) },
+            { icon: "image-outline", label: "Photos", value: String(pins.length) },
+          ]}
+        />
+      </Card>
+
+      <SectionHeader title="Description" />
+      <Card onPress={() => setIsEditing(true)}>
+        <AppText color={trip.review.trim() ? "primary" : "secondary"}>
+          {trip.review.trim() ? trip.review : "No description yet — tap to tell the story of this trip."}
+        </AppText>
+      </Card>
 
       {trip.notes.length > 0 ? (
         <>
-          <AppText variant="titleSmall" style={styles.sectionTitle}>
-            Comments
-          </AppText>
-          {trip.notes.map((note) => (
-            <View key={note.id} style={styles.noteRow}>
-              <AppText color="secondary" variant="labelSmall">
-                {formatStartedAt(note.createdAt)}
-              </AppText>
-              <AppText>{note.text}</AppText>
-            </View>
-          ))}
+          <SectionHeader title="Comments" />
+          <Card style={styles.comments}>
+            {trip.notes.map((note) => (
+              <View key={note.id} style={styles.comment}>
+                <AppText color="secondary" variant="labelSmall">
+                  {formatStartedAt(note.createdAt)}
+                </AppText>
+                <AppText>{note.text}</AppText>
+              </View>
+            ))}
+          </Card>
         </>
       ) : null}
 
-      <AppText variant="titleSmall" style={styles.sectionTitle}>
-        Drives
-      </AppText>
+      <SectionHeader title="Drives" />
       {memberDrives.length === 0 ? (
-        <AppText color="secondary">No drives are part of this trip yet.</AppText>
+        <AppText color="secondary">
+          No drives are part of this trip yet. Open a drive and choose “Add to Trip” from its menu.
+        </AppText>
       ) : (
         memberDrives.map((drive) => (
-          <Pressable
+          <DriveCard
             key={drive.id}
+            drive={drive}
             onPress={() => navigation.navigate("Drive", { driveId: drive.id })}
-            style={[styles.driveRow, { borderBottomColor: theme.palette.border }]}
-          >
-            <AppText variant="titleSmall">{drive.name}</AppText>
-            <AppText color="secondary" variant="bodySmall">
-              {formatStartedAt(drive.startedAt)} · {formatDuration(drive.startedAt, drive.endedAt)}
-            </AppText>
-          </Pressable>
+          />
         ))
       )}
 
-      <AppText variant="titleSmall" style={styles.sectionTitle}>
-        Photos
-      </AppText>
+      <SectionHeader
+        title="Photos & videos"
+        right={
+          pins.length > 0 ? (
+            <AppText variant="labelMedium" color="secondary">
+              {pins.length}
+            </AppText>
+          ) : null
+        }
+      />
       {pins.length === 0 ? (
-        <AppText color="secondary">No photos attached to this trip's drives yet.</AppText>
+        <AppText color="secondary" style={styles.mediaBlock}>
+          Nothing attached to this trip yet.
+        </AppText>
       ) : (
-        <FlatList
-          horizontal
-          data={pins}
-          keyExtractor={(pin) => pin.id}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <Pressable style={styles.photoWrapper} onPress={() => setViewerIndex(index)}>
-              <Image
-                source={{ uri: getPinThumbnailUri(item) }}
-                style={[styles.photo, { borderColor: theme.palette.border }]}
-              />
-              {item.mediaType === "video" ? (
-                <View style={styles.videoBadge}>
-                  <MaterialCommunityIcons name="play-circle" size={22} color="#FFFFFF" />
-                </View>
-              ) : null}
-            </Pressable>
-          )}
-        />
+        <View style={styles.mediaBlock}>
+          <MediaGrid pins={pins} onPressPin={setViewerIndex} onRemovePin={handleRemovePin} />
+        </View>
       )}
+
+      <AddMediaButton
+        label="Add Photo/Video"
+        // Added after the fact: only the media's own GPS metadata counts as its location, never where you are now.
+        onPickMedia={async (uri, mediaType, mediaLocation) => {
+          const id = uuid();
+          const { uri: persistedUri, thumbnailUri } = await persistPinMedia(uri, id, mediaType);
+          addPinToTrip(trip.id, {
+            id,
+            uri: persistedUri,
+            mediaType,
+            thumbnailUri,
+            coordinates: mediaLocation,
+            createdAt: Date.now(),
+          });
+        }}
+      />
+
+      <AppText variant="bodySmall" color="secondary" style={styles.addHint}>
+        A photo is placed on the map only if it has a saved location of its own.
+      </AppText>
 
       <MediaViewerModal pins={pins} initialIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
 
-      <Modal
-        visible={isEditingDescription}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsEditingDescription(false)}
-      >
-        <View style={styles.editBackdrop}>
-          <View style={[styles.editCard, { backgroundColor: theme.palette.surface }]}>
-            <AppText variant="titleMedium" style={styles.editTitle}>
-              Trip description
-            </AppText>
-            <AppTextInput
-              label="Describe this trip"
-              value={descriptionDraft}
-              onChangeText={setDescriptionDraft}
-              multiline
-              numberOfLines={4}
-              autoFocus
-              style={styles.editField}
-            />
-            <AppButton label="Save" onPress={saveDescription} style={styles.editField} />
-            <AppButton label="Cancel" variant="text" onPress={() => setIsEditingDescription(false)} />
-          </View>
-        </View>
-      </Modal>
+      <ShareSummaryModal
+        visible={isSharing}
+        onClose={() => setIsSharing(false)}
+        title={trip.name}
+        subtitle={dateRange}
+        stats={[
+          { icon: "road-variant", label: memberDrives.length === 1 ? "Drive" : "Drives", value: String(memberDrives.length) },
+          { icon: "map-marker-distance", label: "Distance", value: formatDistance(totalDistanceMeters, unitPreference) },
+          { icon: "steering", label: "Driving", value: formatMinutes(drivingMinutes) },
+        ]}
+        routes={routes}
+        pins={pins}
+      />
+
+      <EditDetailsDialog
+        visible={isEditing}
+        title="Edit trip"
+        nameLabel="Trip name"
+        reviewLabel="Description"
+        initialName={trip.name}
+        initialReview={trip.review}
+        onSave={(details) => updateTripDetails(trip.id, details)}
+        onClose={() => setIsEditing(false)}
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  descriptionRow: {
-    marginTop: spacing.xs,
-  },
-  meta: {
-    marginTop: spacing.xs,
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
-  mapContainer: {
-    height: 260,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-    marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  noteRow: {
-    marginBottom: spacing.sm,
-  },
-  driveRow: {
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  titles: {
+    flex: 1,
     gap: spacing.xxs,
   },
-  photoWrapper: {
-    marginRight: spacing.sm,
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  photo: {
-    width: 96,
-    height: 96,
-    borderRadius: 8,
+  mapContainer: {
+    height: 280,
+    borderRadius: radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+    marginBottom: spacing.md,
   },
-  videoBadge: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.25)",
+  addHint: {
+    textAlign: "center",
+    marginTop: spacing.sm,
   },
-  editBackdrop: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.lg,
-    backgroundColor: "rgba(0,0,0,0.45)",
+  comments: {
+    gap: spacing.md,
   },
-  editCard: {
-    width: "100%",
-    borderRadius: 16,
-    padding: spacing.lg,
+  comment: {
+    gap: spacing.xxs,
   },
-  editTitle: {
-    marginBottom: spacing.sm,
-  },
-  editField: {
+  mediaBlock: {
     marginBottom: spacing.md,
   },
 });

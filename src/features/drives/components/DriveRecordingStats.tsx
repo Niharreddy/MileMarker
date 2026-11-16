@@ -1,60 +1,83 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 
-import { AppText } from "@/components";
+import { AppText, StatRow } from "@/components";
 import { useSettingsStore } from "@/store";
 import { spacing, useAppTheme } from "@/theme";
-import { calculateRouteDistanceMeters, formatDistance, formatMinutes } from "@/utils";
+import { calculateRouteDistanceMeters, formatDistance, formatElapsed } from "@/utils";
 
+import { useDriveStore } from "../store/driveStore";
 import type { Drive } from "../types";
 
 export type DriveRecordingStatsProps = {
   drive: Drive;
 };
 
-/** Live elapsed time / distance / photo count for the drive currently being recorded. */
+/** Live "Recording" banner + elapsed time / distance / photo / note counts for the drive currently being recorded. */
 export function DriveRecordingStats({ drive }: DriveRecordingStatsProps) {
   const theme = useAppTheme();
   const unitPreference = useSettingsStore((state) => state.unitPreference);
+  const isBackgroundTrackingActive = useDriveStore((state) => state.isBackgroundTrackingActive);
   const [now, setNow] = useState(() => Date.now());
+  const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const elapsedMinutes = Math.max(0, Math.floor((now - drive.startedAt) / 60_000));
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.25, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [pulse]);
+
   const distanceMeters = calculateRouteDistanceMeters(drive.points);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.palette.surfaceVariant }]}>
-      <Stat label="Elapsed" value={formatMinutes(elapsedMinutes)} />
-      <Stat label="Distance" value={formatDistance(distanceMeters, unitPreference)} />
-      <Stat label="Photos" value={String(drive.pins.length)} />
-    </View>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <AppText variant="titleMedium">{value}</AppText>
-      <AppText variant="labelSmall" color="secondary">
-        {label}
-      </AppText>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Animated.View style={[styles.dot, { backgroundColor: theme.palette.error, opacity: pulse }]} />
+        <AppText variant="labelLarge" style={{ color: theme.palette.error }}>
+          Recording
+        </AppText>
+        <AppText variant="labelSmall" color="secondary" style={styles.hint} numberOfLines={1}>
+          {isBackgroundTrackingActive ? "Keeps going in the background" : "Keep the app open to keep tracking"}
+        </AppText>
+      </View>
+      <StatRow
+        items={[
+          { icon: "timer-outline", label: "Elapsed", value: formatElapsed(now - drive.startedAt) },
+          { icon: "map-marker-distance", label: "Distance", value: formatDistance(distanceMeters, unitPreference) },
+          { icon: "image-outline", label: "Photos", value: String(drive.pins.length) },
+          { icon: "comment-text-outline", label: "Notes", value: String(drive.notes.length) },
+        ]}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    borderRadius: 12,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
+    gap: spacing.sm,
   },
-  stat: {
+  header: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: spacing.xs,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  hint: {
+    flex: 1,
+    textAlign: "right",
   },
 });

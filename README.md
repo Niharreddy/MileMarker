@@ -72,13 +72,40 @@ attaching memories, notes, ratings, and photos to places along the way.
 - **Memories**: every photo pinned across every trip, flattened into one
   newest-first grid on the Memories tab; tapping a photo opens that trip's
   detail screen.
-- **Map**: MapLibre with a free OpenFreeMap street style (no API key). Home
-  shows a large, flexible-height map with floating Start/Stop Trip and Past
-  Trips buttons anchored just beneath it.
+- **Map**: MapLibre with free OpenFreeMap styles (no API key) — the light
+  "liberty" style, or the "dark" style when the app is in dark mode. Home is
+  a full-bleed live map with search floating on top and a bottom panel
+  (lifetime stats + Start Drive, or live recording stats + Stop Drive). The
+  camera follows you until you pan or zoom by hand; a recenter button brings
+  it back. Past routes get start/end markers and tappable photo pins.
+- **Editing & sharing**: a saved drive or trip can be renamed and its
+  review/description rewritten anytime from its detail screen. A drive’s
+  route can be shared as a GPX file from its "..." menu.
+- **Share summary**: the share button on a drive or trip builds one
+  picture — a map of the route, headline stats, and up to four photos you
+  pick — and hands it to the OS share sheet (Instagram, Messages, save to
+  gallery). Uses `react-native-view-shot`, a native module, so it needs a
+  fresh native build.
+- **Stats**: a stats screen (from the Home panel or the Drives tab) with
+  distance per month for the past year, current and longest driving-day
+  streaks, and records (longest drive, most time behind the wheel, biggest
+  month).
+- **Photo locations**: a photo/video added to an already-saved drive or
+  trip is only placed on the map if the file carries its own GPS metadata;
+  otherwise it's attached with no location (it still shows in every photo
+  grid). While a drive is recording, a photo with no metadata of its own
+  is pinned at your current position.
+- **Browsing**: the Drives tab is searchable (name, notes, trip) and
+  sortable (newest / oldest / longest), grouped by month. Memories is
+  grouped by month with an All / Photos / Videos filter and opens a
+  full-screen, swipeable viewer that links back to the source drive or
+  trip.
 - **API layer**: a typed `apiClient` + React Query `queryClient`, wired into
   the provider tree but unused until a real feature needs the network.
 - **Reusable components**: `AppText`, `AppButton`, `AppTextInput`,
-  `AppSearchBar`, `ScreenContainer`, `LoadingIndicator`, `AppHeader`.
+  `AppSearchBar`, `ScreenContainer`, `LoadingIndicator`, `AppHeader`,
+  `Card`, `StatRow`, `MetaItem`, `SectionHeader`, `SegmentedControl`,
+  `EmptyState`, `AppDialog`, `EditDetailsDialog`.
 
 See `src/` for the full folder structure; each top-level folder has a
 one-line purpose in the project's architecture writeup.
@@ -128,6 +155,5 @@ listing copy is in `STORE_LISTING.md`, draft privacy policy in
 
 ## Next up
 
-- GPX/route export
 - Smarter activity recognition (native motion APIs) for more accurate
   driving vs. walking/cycling detection

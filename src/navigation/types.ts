@@ -16,6 +16,7 @@ export type RootStackParamList = {
   Main: undefined;
   Drive: { driveId: string };
   Trip: { tripId: string };
+  Stats: undefined;
 };
 
 // Merges both param lists into one namespace so `useNavigation()`/`navigate()`

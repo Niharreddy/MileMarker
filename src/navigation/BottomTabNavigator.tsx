@@ -37,6 +37,9 @@ export function BottomTabNavigator() {
           backgroundColor: theme.palette.surface,
           borderTopColor: theme.palette.border,
         },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        // Otherwise the tab bar rides up on top of the keyboard while searching.
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused, color, size }) => {
           const icons = TAB_ICONS[route.name as keyof RootTabParamList];
           return (

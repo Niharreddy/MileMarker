@@ -32,10 +32,21 @@
           "cameraPermission": "Allow Mile Marker to use the camera so you can attach a new photo to a trip."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
+          }
+        }
+      ],
+      "./plugins/withLegacyBackHandling"
     ],
     "ios": {
-      "bundleIdentifier": "com.nihar.milemarker",
+      "bundleIdentifier": "com.milemarker.myapp",
       "infoPlist": {
         "UIBackgroundModes": [
           "location"
@@ -48,7 +59,7 @@
       "resizeMode": "contain"
     },
     "android": {
-      "package": "com.nihar.milemarker",
+      "package": "com.milemarker.myapp",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon-foreground.png",
         "backgroundColor": "#D97A56"

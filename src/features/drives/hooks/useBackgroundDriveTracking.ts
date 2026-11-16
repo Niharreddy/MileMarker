@@ -27,8 +27,12 @@ export function useBackgroundDriveTracking() {
 
     const stoppedDrive = useDriveStore.getState().pendingDrive;
     if (stoppedDrive) {
-      const matchedPins = await findGeotaggedPhotosForDrive(stoppedDrive);
-      addPinsToPendingDrive(matchedPins);
+      try {
+        const matchedPins = await findGeotaggedPhotosForDrive(stoppedDrive);
+        addPinsToPendingDrive(matchedPins);
+      } catch {
+        // Auto-matching is best-effort; the drive itself is already saved.
+      }
     }
   }, [stopDriveInStore, addPinsToPendingDrive]);
 

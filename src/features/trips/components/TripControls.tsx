@@ -1,17 +1,23 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { v4 as uuid } from "uuid";
 
-import { AppButton, AppText } from "@/components";
+import { AppButton, AppText, Card } from "@/components";
 import { useDriveStore } from "@/features/drives";
 import { useCurrentLocation, useLocationPermission } from "@/features/map";
 import { spacing, useAppTheme } from "@/theme";
+import { formatDate } from "@/utils";
 
 import { useTripStore } from "../store/tripStore";
 import { AddTripCommentButton } from "./AddTripCommentButton";
 import { StartTripDialog } from "./StartTripDialog";
 
-/** Start/Stop Trip button + (while active) a Trip-comment button and a running drive count, anchored above the trips list. */
+/**
+ * The card at the top of the Trips tab. Idle: a short explainer + Start
+ * Trip. Active: the trip in progress with its running drive count, plus
+ * Stop Trip and a Trip-comment button.
+ */
 export function TripControls() {
   const theme = useAppTheme();
   const locationPermission = useLocationPermission();
@@ -32,58 +38,96 @@ export function TripControls() {
     : 0;
 
   return (
-    <View style={styles.container}>
-      {activeTrip ? (
-        <AppText variant="labelMedium" color="secondary" style={styles.status}>
-          {activeTrip.name} — {driveCount} {driveCount === 1 ? "drive" : "drives"} so far.
-        </AppText>
-      ) : null}
-
-      <View
-        style={[
-          styles.row,
-          { backgroundColor: theme.palette.surface, shadowColor: theme.palette.textPrimary },
-        ]}
-      >
-        <AppButton
-          label={activeTrip ? "Stop Trip" : "Start Trip"}
-          variant={activeTrip ? "outline" : "primary"}
-          disabled={hasPendingTrip}
-          onPress={activeTrip ? stopTrip : () => setIsStartDialogVisible(true)}
-          style={styles.button}
-        />
-        {activeTrip ? (
-          <AddTripCommentButton
-            disabled={!coordinates}
-            onSubmitComment={(text) => {
-              if (!coordinates) return;
-              addNoteToActiveTrip({ id: uuid(), text, coordinates, createdAt: Date.now() });
-            }}
+    <Card elevation="md" style={styles.card}>
+      <View style={styles.header}>
+        <View
+          style={[
+            styles.iconCircle,
+            { backgroundColor: activeTrip ? theme.palette.primary : theme.palette.primaryContainer },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={activeTrip ? "bag-suitcase" : "bag-suitcase-outline"}
+            size={22}
+            color={activeTrip ? theme.palette.onPrimary : theme.palette.onPrimaryContainer}
           />
-        ) : null}
+        </View>
+        <View style={styles.titles}>
+          {activeTrip ? (
+            <>
+              <AppText variant="labelSmall" style={{ color: theme.palette.primary }}>
+                TRIP IN PROGRESS
+              </AppText>
+              <AppText variant="titleMedium" numberOfLines={1}>
+                {activeTrip.name}
+              </AppText>
+              <AppText variant="bodySmall" color="secondary" numberOfLines={1}>
+                {driveCount} {driveCount === 1 ? "drive" : "drives"} so far · since{" "}
+                {formatDate(activeTrip.startedAt)}
+              </AppText>
+            </>
+          ) : (
+            <>
+              <AppText variant="titleMedium">Heading out?</AppText>
+              <AppText variant="bodySmall" color="secondary">
+                Start a trip and every drive you record until you stop it gets bundled together.
+              </AppText>
+            </>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.actions}>
+        {activeTrip ? (
+          <>
+            <AppButton label="Stop Trip" variant="outline" icon="stop" onPress={stopTrip} style={styles.button} />
+            <AddTripCommentButton
+              disabled={!coordinates}
+              onSubmitComment={(text) => {
+                if (!coordinates) return;
+                addNoteToActiveTrip({ id: uuid(), text, coordinates, createdAt: Date.now() });
+              }}
+            />
+          </>
+        ) : (
+          <AppButton
+            label="Start Trip"
+            icon="play"
+            disabled={hasPendingTrip}
+            onPress={() => setIsStartDialogVisible(true)}
+            style={styles.button}
+          />
+        )}
       </View>
 
       <StartTripDialog visible={isStartDialogVisible} onClose={() => setIsStartDialogVisible(false)} />
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.lg,
+  card: {
+    gap: spacing.md,
   },
-  status: {
-    marginBottom: spacing.xs,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
   },
-  row: {
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titles: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  actions: {
     flexDirection: "row",
     gap: spacing.sm,
-    borderRadius: 16,
-    padding: spacing.sm,
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
   },
   button: {
     flex: 1,

@@ -1,42 +1,76 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Switch } from "react-native-paper";
 
-import { AppButton, AppHeader, AppText, ScreenContainer } from "@/components";
-import { exportAllData, importDataFromFile } from "@/features/drives";
+import {
+  AppButton,
+  AppHeader,
+  AppText,
+  Card,
+  ScreenContainer,
+  SectionHeader,
+  SegmentedControl,
+  StatRow,
+  type IconName,
+  type SegmentedOption,
+} from "@/components";
+import { exportAllData, importDataFromFile, useDriveStore } from "@/features/drives";
+import { useTripStore } from "@/features/trips";
 import { useSettingsStore, type ThemePreference, type UnitPreference } from "@/store";
-import { spacing } from "@/theme";
+import { spacing, useAppTheme } from "@/theme";
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+import appConfig from "../../../app.json";
+
+const THEME_OPTIONS: readonly SegmentedOption<ThemePreference>[] = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
 
-const UNIT_OPTIONS: { value: UnitPreference; label: string }[] = [
+const UNIT_OPTIONS: readonly SegmentedOption<UnitPreference>[] = [
   { value: "metric", label: "Kilometers" },
   { value: "imperial", label: "Miles" },
 ];
 
-const AUTO_DETECT_OPTIONS: { value: boolean; label: string }[] = [
-  { value: true, label: "On" },
-  { value: false, label: "Off" },
-];
+function SettingLabel({ icon, title, description }: { icon: IconName; title: string; description?: string }) {
+  const theme = useAppTheme();
 
-/**
- * App preferences. Doubles as the Phase 1 proof-of-life for the state
- * layer: the theme toggle below reads/writes `settingsStore`, which is
- * persisted to MMKV, and the whole app re-themes immediately — confirming
- * Zustand, MMKV, and the theme system are wired together correctly.
- */
+  return (
+    <View style={styles.labelRow}>
+      <MaterialCommunityIcons name={icon} size={20} color={theme.palette.primary} style={styles.labelIcon} />
+      <View style={styles.labelText}>
+        <AppText variant="titleSmall">{title}</AppText>
+        {description ? (
+          <AppText variant="bodySmall" color="secondary">
+            {description}
+          </AppText>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+/** App preferences (theme, units, auto-detect), data export/import, and a little "about". */
 export function SettingsScreen() {
+  const theme = useAppTheme();
   const themePreference = useSettingsStore((state) => state.themePreference);
   const setThemePreference = useSettingsStore((state) => state.setThemePreference);
   const unitPreference = useSettingsStore((state) => state.unitPreference);
   const setUnitPreference = useSettingsStore((state) => state.setUnitPreference);
   const autoDetectDrivingEnabled = useSettingsStore((state) => state.autoDetectDrivingEnabled);
   const setAutoDetectDrivingEnabled = useSettingsStore((state) => state.setAutoDetectDrivingEnabled);
+  const pastDrives = useDriveStore((state) => state.pastDrives);
+  const pastTrips = useTripStore((state) => state.pastTrips);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  const mediaCount = useMemo(
+    () =>
+      pastDrives.reduce((total, drive) => total + drive.pins.length, 0) +
+      pastTrips.reduce((total, trip) => total + trip.pins.length, 0),
+    [pastDrives, pastTrips]
+  );
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -64,100 +98,122 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer scrollable edges={["top", "left", "right"]}>
       <AppHeader title="Settings" />
 
-      <AppText variant="titleSmall" color="secondary" style={styles.sectionLabel}>
-        Appearance
-      </AppText>
-      <View style={styles.optionRow}>
-        {THEME_OPTIONS.map((option) => (
-          <AppButton
-            key={option.value}
-            label={option.label}
-            variant={themePreference === option.value ? "primary" : "outline"}
-            onPress={() => setThemePreference(option.value)}
-            style={styles.optionButton}
-          />
-        ))}
-      </View>
+      <SectionHeader title="Appearance" style={styles.firstSection} />
+      <Card style={styles.card}>
+        <SettingLabel icon="theme-light-dark" title="Theme" />
+        <SegmentedControl options={THEME_OPTIONS} value={themePreference} onChange={setThemePreference} />
+      </Card>
 
-      <AppText variant="titleSmall" color="secondary" style={[styles.sectionLabel, styles.sectionSpacing]}>
-        Distance units
-      </AppText>
-      <View style={styles.optionRow}>
-        {UNIT_OPTIONS.map((option) => (
-          <AppButton
-            key={option.value}
-            label={option.label}
-            variant={unitPreference === option.value ? "primary" : "outline"}
-            onPress={() => setUnitPreference(option.value)}
-            style={styles.optionButton}
-          />
-        ))}
-      </View>
+      <SectionHeader title="Driving" />
+      <Card style={styles.card}>
+        <SettingLabel icon="map-marker-distance" title="Distance units" />
+        <SegmentedControl options={UNIT_OPTIONS} value={unitPreference} onChange={setUnitPreference} />
 
-      <AppText variant="titleSmall" color="secondary" style={[styles.sectionLabel, styles.sectionSpacing]}>
-        Auto-detect driving
-      </AppText>
-      <AppText color="secondary" style={styles.helperText}>
-        Automatically start recording when Mile Marker notices you're driving — works even if the app is
-        closed. Only kicks in for sustained driving speed, not walking.
-      </AppText>
-      <View style={styles.optionRow}>
-        {AUTO_DETECT_OPTIONS.map((option) => (
-          <AppButton
-            key={String(option.value)}
-            label={option.label}
-            variant={autoDetectDrivingEnabled === option.value ? "primary" : "outline"}
-            onPress={() => setAutoDetectDrivingEnabled(option.value)}
-            style={styles.optionButton}
-          />
-        ))}
-      </View>
+        <View style={[styles.divider, { backgroundColor: theme.palette.border }]} />
 
-      <AppText variant="titleSmall" color="secondary" style={[styles.sectionLabel, styles.sectionSpacing]}>
-        Data
-      </AppText>
-      <AppText color="secondary" style={styles.helperText}>
-        Export every drive — routes, photos, and notes — to a file you can back up or move to another
-        device, or import one back in.
-      </AppText>
-      <View style={styles.optionRow}>
-        <AppButton
-          label="Export Data"
-          variant="outline"
-          loading={isExporting}
-          onPress={handleExport}
-          style={styles.optionButton}
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabel}>
+            <SettingLabel
+              icon="car-connected"
+              title="Auto-detect driving"
+              description="Start recording automatically when Mile Marker notices you're driving — even if the app is closed. Only kicks in at sustained driving speed, not walking."
+            />
+          </View>
+          <Switch value={autoDetectDrivingEnabled} onValueChange={setAutoDetectDrivingEnabled} />
+        </View>
+      </Card>
+
+      <SectionHeader title="Your data" />
+      <Card style={styles.card}>
+        <StatRow
+          items={[
+            { label: pastDrives.length === 1 ? "Drive" : "Drives", value: String(pastDrives.length) },
+            { label: pastTrips.length === 1 ? "Trip" : "Trips", value: String(pastTrips.length) },
+            { label: "Photos & videos", value: String(mediaCount) },
+          ]}
         />
-        <AppButton
-          label="Import Data"
-          variant="outline"
-          loading={isImporting}
-          onPress={handleImport}
-          style={styles.optionButton}
+
+        <View style={[styles.divider, { backgroundColor: theme.palette.border }]} />
+
+        <SettingLabel
+          icon="database-export-outline"
+          title="Back up & restore"
+          description="Export every drive — routes, photos, and notes — to a single file you can keep safe or move to another device, or import one back in."
         />
-      </View>
+        <View style={styles.buttonRow}>
+          <AppButton
+            label="Export"
+            variant="outline"
+            icon="export-variant"
+            loading={isExporting}
+            disabled={isExporting || pastDrives.length === 0}
+            onPress={handleExport}
+            style={styles.flexButton}
+          />
+          <AppButton
+            label="Import"
+            variant="outline"
+            icon="import"
+            loading={isImporting}
+            disabled={isImporting}
+            onPress={handleImport}
+            style={styles.flexButton}
+          />
+        </View>
+      </Card>
+
+      <SectionHeader title="About" />
+      <Card style={styles.card}>
+        <SettingLabel
+          icon="shield-lock-outline"
+          title="Private by design"
+          description="Everything you record stays on this device. No account, no cloud, no tracking."
+        />
+        <AppText variant="bodySmall" color="secondary">
+          {appConfig.expo.name} · version {appConfig.expo.version}
+        </AppText>
+      </Card>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionLabel: {
-    marginBottom: spacing.sm,
+  firstSection: {
+    marginTop: 0,
   },
-  sectionSpacing: {
-    marginTop: spacing.lg,
+  card: {
+    gap: spacing.md,
   },
-  helperText: {
-    marginBottom: spacing.sm,
-  },
-  optionRow: {
+  labelRow: {
     flexDirection: "row",
     gap: spacing.sm,
   },
-  optionButton: {
+  labelIcon: {
+    marginTop: 1,
+  },
+  labelText: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  switchLabel: {
+    flex: 1,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  flexButton: {
     flex: 1,
   },
 });

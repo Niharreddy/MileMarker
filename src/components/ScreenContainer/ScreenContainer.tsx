@@ -22,17 +22,26 @@ export function ScreenContainer({
   style,
 }: ScreenContainerProps) {
   const theme = useAppTheme();
-  const Container = scrollable ? ScrollView : View;
-  const containerStyle = scrollable
-    ? { contentContainerStyle: [styles.content, style] }
-    : { style: [styles.content, style] };
 
   return (
     <SafeAreaView
       edges={edges}
       style={[styles.safeArea, { backgroundColor: theme.palette.background }]}
     >
-      <Container {...containerStyle}>{children}</Container>
+      {scrollable ? (
+        // `flexGrow` (not `flex: 1`) on the content container: `flex: 1` pins
+        // it to the viewport height, which clips anything taller instead of
+        // letting it scroll.
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, style]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={[styles.content, style]}>{children}</View>
+      )}
     </SafeAreaView>
   );
 }
@@ -44,5 +53,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.md,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
   },
 });

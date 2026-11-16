@@ -1,5 +1,7 @@
 export {
+  deleteDrivePinRow,
   deleteDriveRow,
+  deleteTripPinRow,
   deleteTripRow,
   getAllDriveRows,
   getAllTripRows,
@@ -8,12 +10,14 @@ export {
   getDrivePointRows,
   getDriveRowsByTripId,
   getTripNoteRows,
+  getTripPinRows,
   initDatabase,
   insertDriveNoteRow,
   insertDrivePinRow,
   insertDrivePointRow,
   insertDriveRow,
   insertTripNoteRow,
+  insertTripPinRow,
   insertTripRow,
   updateDriveDetailsRow,
   updateDriveEndedAtRow,
@@ -22,4 +26,12 @@ export {
   updateTripEndedAtRow,
   updateTripReviewRow,
 } from "./database";
-export type { DriveNoteRow, DrivePinRow, DrivePointRow, DriveRow, TripNoteRow, TripRow } from "./database";
+export type {
+  DriveNoteRow,
+  DrivePinRow,
+  DrivePointRow,
+  DriveRow,
+  TripNoteRow,
+  TripPinRow,
+  TripRow,
+} from "./database";

@@ -14,7 +14,8 @@ const coordinatesSchema = z.object({
 
 const exportedPinSchema = z.object({
   id: z.string(),
-  coordinates: coordinatesSchema,
+  // Null for a pin with no known position (media added after the fact with no GPS metadata).
+  coordinates: coordinatesSchema.nullable(),
   createdAt: z.number(),
   photoBase64: z.string(),
   photoExtension: z.string(),

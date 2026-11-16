@@ -1,11 +1,17 @@
 export { LOCATION_POLL_INTERVAL_MS } from "./constants";
+export { AddMediaButton } from "./components/AddMediaButton";
 export { AddNoteButton } from "./components/AddNoteButton";
 export { AddPinButton } from "./components/AddPinButton";
+export { MediaGrid } from "./components/MediaGrid";
+export type { MediaGridProps } from "./components/MediaGrid";
 export { MediaViewerModal } from "./components/MediaViewerModal";
 export { PermissionGate } from "./components/PermissionGate";
 export { PhotoPickerSheet } from "./components/PhotoPickerSheet";
 export { RouteMap } from "./components/RouteMap";
-export type { NamedRoute, RouteMapProps } from "./components/RouteMap";
+export type { NamedRoute, RouteMapHandle, RouteMapProps } from "./components/RouteMap";
+export { SnapshotRouteMap } from "./components/SnapshotRouteMap";
+export type { SnapshotRouteMapHandle, SnapshotRouteMapProps } from "./components/SnapshotRouteMap";
+export { readAssetLocation, readExifLocation } from "./mediaLocation";
 export { getPinThumbnailUri } from "./pinMedia";
 export { useBackgroundLocationPermission } from "./hooks/useBackgroundLocationPermission";
 export { useCameraPermission } from "./hooks/useCameraPermission";

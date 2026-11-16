@@ -100,11 +100,24 @@ export function initDatabase() {
       FOREIGN KEY (trip_id) REFERENCES trips(id)
     );
 
+    CREATE TABLE IF NOT EXISTS trip_pins (
+      id TEXT PRIMARY KEY,
+      trip_id TEXT NOT NULL,
+      uri TEXT NOT NULL,
+      media_type TEXT NOT NULL DEFAULT 'photo',
+      thumbnail_uri TEXT,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (trip_id) REFERENCES trips(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_drive_points_drive ON drive_points(drive_id);
     CREATE INDEX IF NOT EXISTS idx_drive_pins_drive ON drive_pins(drive_id);
     CREATE INDEX IF NOT EXISTS idx_drive_notes_drive ON drive_notes(drive_id);
     CREATE INDEX IF NOT EXISTS idx_drives_trip_id ON drives(trip_id);
     CREATE INDEX IF NOT EXISTS idx_trip_notes_trip ON trip_notes(trip_id);
+    CREATE INDEX IF NOT EXISTS idx_trip_pins_trip ON trip_pins(trip_id);
   `);
 
   // `CREATE TABLE IF NOT EXISTS` above doesn't add columns to a drives/drive_pins
@@ -129,6 +142,17 @@ export function initDatabase() {
     db.execSync(`ALTER TABLE trips ADD COLUMN date_label TEXT NOT NULL DEFAULT '';`);
   } catch {
     // Column already exists.
+  }
+  // A pin added after the fact may have no location at all (the photo carried
+  // no GPS metadata). latitude/longitude are NOT NULL in every existing
+  // install, so rather than rebuild the tables, a flag marks whether those
+  // two columns hold a real position (1) or a 0/0 placeholder (0).
+  for (const table of ["drive_pins", "trip_pins"]) {
+    try {
+      db.execSync(`ALTER TABLE ${table} ADD COLUMN has_location INTEGER NOT NULL DEFAULT 1;`);
+    } catch {
+      // Column already exists.
+    }
   }
 }
 
@@ -156,6 +180,8 @@ export type DrivePinRow = {
   thumbnail_uri: string | null;
   latitude: number;
   longitude: number;
+  /** 0 when the pin has no known position — `latitude`/`longitude` are then just placeholders. */
+  has_location: number;
   created_at: number;
 };
 
@@ -204,14 +230,20 @@ export function insertDrivePinRow(
   uri: string,
   mediaType: string,
   thumbnailUri: string | null,
-  latitude: number,
-  longitude: number,
+  /** Both null for a pin with no known position. */
+  latitude: number | null,
+  longitude: number | null,
   createdAt: number
 ) {
+  const hasLocation = latitude !== null && longitude !== null;
   db.runSync(
-    `INSERT INTO drive_pins (id, drive_id, uri, media_type, thumbnail_uri, latitude, longitude, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, driveId, uri, mediaType, thumbnailUri, latitude, longitude, createdAt]
+    `INSERT INTO drive_pins (id, drive_id, uri, media_type, thumbnail_uri, latitude, longitude, has_location, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, driveId, uri, mediaType, thumbnailUri, latitude ?? 0, longitude ?? 0, hasLocation ? 1 : 0, createdAt]
   );
+}
+
+export function deleteDrivePinRow(id: string) {
+  db.runSync(`DELETE FROM drive_pins WHERE id = ?`, [id]);
 }
 
 export function getAllDriveRows(): DriveRow[] {
@@ -297,6 +329,7 @@ export function deleteTripRow(id: string) {
   // Member drives outlive their trip — unbundle them, don't delete them.
   db.runSync(`UPDATE drives SET trip_id = NULL WHERE trip_id = ?`, [id]);
   db.runSync(`DELETE FROM trip_notes WHERE trip_id = ?`, [id]);
+  db.runSync(`DELETE FROM trip_pins WHERE trip_id = ?`, [id]);
   db.runSync(`DELETE FROM trips WHERE id = ?`, [id]);
 }
 
@@ -322,4 +355,45 @@ export function getTripNoteRows(tripId: string): TripNoteRow[] {
   return db.getAllSync<TripNoteRow>(`SELECT * FROM trip_notes WHERE trip_id = ? ORDER BY created_at ASC`, [
     tripId,
   ]);
+}
+
+export type TripPinRow = {
+  id: string;
+  trip_id: string;
+  uri: string;
+  media_type: string;
+  thumbnail_uri: string | null;
+  latitude: number;
+  longitude: number;
+  /** 0 when the pin has no known position — `latitude`/`longitude` are then just placeholders. */
+  has_location: number;
+  created_at: number;
+};
+
+export function insertTripPinRow(
+  id: string,
+  tripId: string,
+  uri: string,
+  mediaType: string,
+  thumbnailUri: string | null,
+  /** Both null for a pin with no known position. */
+  latitude: number | null,
+  longitude: number | null,
+  createdAt: number
+) {
+  const hasLocation = latitude !== null && longitude !== null;
+  db.runSync(
+    `INSERT INTO trip_pins (id, trip_id, uri, media_type, thumbnail_uri, latitude, longitude, has_location, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, tripId, uri, mediaType, thumbnailUri, latitude ?? 0, longitude ?? 0, hasLocation ? 1 : 0, createdAt]
+  );
+}
+
+export function getTripPinRows(tripId: string): TripPinRow[] {
+  return db.getAllSync<TripPinRow>(`SELECT * FROM trip_pins WHERE trip_id = ? ORDER BY created_at ASC`, [
+    tripId,
+  ]);
+}
+
+export function deleteTripPinRow(id: string) {
+  db.runSync(`DELETE FROM trip_pins WHERE id = ?`, [id]);
 }

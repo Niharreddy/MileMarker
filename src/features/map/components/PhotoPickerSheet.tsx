@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Alert, FlatList, Image, Modal, Pressable, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as MediaLibrary from "expo-media-library";
@@ -9,12 +9,18 @@ import { spacing, useAppTheme } from "@/theme";
 
 import { RECENT_PHOTOS_LIMIT } from "../constants";
 import { useCameraPermission } from "../hooks/useCameraPermission";
-import type { PinMediaType } from "../types";
+import { readAssetLocation, readExifLocation } from "../mediaLocation";
+import type { Coordinates, PinMediaType } from "../types";
 
 export type PhotoPickerSheetProps = {
   visible: boolean;
   onClose: () => void;
-  onSelect: (uri: string, mediaType: PinMediaType) => void;
+  /**
+   * `location` is where the photo/video itself says it was taken (its
+   * embedded GPS metadata), or null if it carries none — never the device's
+   * current position.
+   */
+  onSelect: (uri: string, mediaType: PinMediaType, location: Coordinates | null) => void;
 };
 
 const NUM_COLUMNS = 3;
@@ -27,15 +33,22 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
   const [isLoading, setIsLoading] = useState(false);
 
   const handleTakePhoto = async () => {
-    const granted = cameraPermission.isGranted || (await cameraPermission.request());
-    if (!granted) return;
+    try {
+      const granted = cameraPermission.isGranted || (await cameraPermission.request());
+      if (!granted) return;
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
-    });
-    const asset = result.assets?.[0];
-    if (!result.canceled && asset) onSelect(asset.uri, asset.type === "video" ? "video" : "photo");
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        quality: 0.8,
+        exif: true,
+      });
+      const asset = result.assets?.[0];
+      if (!result.canceled && asset) {
+        onSelect(asset.uri, asset.type === "video" ? "video" : "photo", readExifLocation(asset.exif));
+      }
+    } catch (error) {
+      Alert.alert("Camera unavailable", error instanceof Error ? error.message : "Couldn't open the camera.");
+    }
   };
 
   useEffect(() => {
@@ -50,6 +63,9 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
     })
       .then((result) => {
         if (!cancelled) setAssets(result.assets);
+      })
+      .catch(() => {
+        if (!cancelled) setAssets([]);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -93,7 +109,9 @@ export function PhotoPickerSheet({ visible, onClose, onSelect }: PhotoPickerShee
             renderItem={({ item }) => (
               <Pressable
                 style={styles.cell}
-                onPress={() => onSelect(item.uri, item.mediaType === "video" ? "video" : "photo")}
+                onPress={async () =>
+                  onSelect(item.uri, item.mediaType === "video" ? "video" : "photo", await readAssetLocation(item))
+                }
               >
                 {item.mediaType === "video" ? (
                   <View style={[styles.thumbnail, styles.videoPlaceholder]}>

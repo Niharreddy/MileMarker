@@ -2,7 +2,9 @@ import { create } from "zustand";
 import { v4 as uuid } from "uuid";
 
 import { StorageKeys } from "@/constants/storageKeys";
+import { deletePinMedia } from "@/features/drives/photoStorage";
 import { useDriveStore } from "@/features/drives/store/driveStore";
+import type { Pin } from "@/features/map";
 import { appStorage } from "@/services/storage";
 
 import {
@@ -13,6 +15,8 @@ import {
   persistTripDetails,
   persistTripEnded,
   persistTripNote,
+  persistTripPin,
+  persistTripPinDeleted,
   persistTripReview,
 } from "../persistence";
 import type { Trip, TripNote } from "../types";
@@ -32,7 +36,13 @@ export type TripState = {
   deleteTrip: (id: string) => void;
   /** Edits a past trip's description anytime from Trip Detail — distinct from `saveTrip`, which only applies to a just-stopped `pendingTrip`. */
   updateTripReview: (id: string, review: string) => void;
+  /** Renames / re-describes a past trip anytime from Trip Detail. */
+  updateTripDetails: (id: string, details: { name: string; review: string }) => void;
   addNoteToActiveTrip: (note: TripNote) => void;
+  /** Adds a photo/video directly to a trip (active or past) — separate from a member drive's own pins. */
+  addPinToTrip: (tripId: string, pin: Pin) => void;
+  /** Removes one of the trip's own pins, deleting its durable media file too. Doesn't touch a member drive's pins. */
+  removePinFromTrip: (tripId: string, pinId: string) => void;
 };
 
 /**
@@ -53,7 +63,7 @@ export const useTripStore = create<TripState>()((set, get) => ({
     const startedAt = Date.now();
     persistNewTrip(id, startedAt, name, dateLabel);
     appStorage.set(StorageKeys.activeTripId, id);
-    set({ activeTrip: { id, name, review: "", dateLabel, startedAt, endedAt: null, notes: [] } });
+    set({ activeTrip: { id, name, review: "", dateLabel, startedAt, endedAt: null, notes: [], pins: [] } });
   },
 
   stopTrip: () => {
@@ -80,15 +90,20 @@ export const useTripStore = create<TripState>()((set, get) => ({
 
   discardPendingTrip: () => {
     const { pendingTrip } = get();
-    if (pendingTrip) persistTripDeleted(pendingTrip.id);
+    if (pendingTrip) {
+      persistTripDeleted(pendingTrip.id);
+      for (const pin of pendingTrip.pins) void deletePinMedia(pin.uri, pin.thumbnailUri);
+    }
     set({ pendingTrip: null });
   },
 
   deleteTrip: (id) => {
     const { pastTrips } = get();
-    if (!pastTrips.some((candidate) => candidate.id === id)) return;
+    const trip = pastTrips.find((candidate) => candidate.id === id);
+    if (!trip) return;
     persistTripDeleted(id);
     set({ pastTrips: pastTrips.filter((candidate) => candidate.id !== id) });
+    for (const pin of trip.pins) void deletePinMedia(pin.uri, pin.thumbnailUri);
     // The DB already cleared trip_id on member drives (see deleteTripRow) — reload so the in-memory copy matches.
     useDriveStore.getState().reloadFromDatabase();
   },
@@ -102,11 +117,55 @@ export const useTripStore = create<TripState>()((set, get) => ({
     });
   },
 
+  updateTripDetails: (id, { name, review }) => {
+    const { pastTrips } = get();
+    if (!pastTrips.some((candidate) => candidate.id === id)) return;
+    persistTripDetails(id, name, review);
+    set({
+      pastTrips: pastTrips.map((candidate) => (candidate.id === id ? { ...candidate, name, review } : candidate)),
+    });
+  },
+
   addNoteToActiveTrip: (note) => {
     const { activeTrip } = get();
     if (!activeTrip) return;
     persistTripNote(activeTrip.id, note);
     set({ activeTrip: { ...activeTrip, notes: [...activeTrip.notes, note] } });
+  },
+
+  addPinToTrip: (tripId, pin) => {
+    const { activeTrip, pastTrips } = get();
+    persistTripPin(tripId, pin);
+    if (activeTrip?.id === tripId) {
+      set({ activeTrip: { ...activeTrip, pins: [...activeTrip.pins, pin] } });
+      return;
+    }
+    set({
+      pastTrips: pastTrips.map((candidate) =>
+        candidate.id === tripId ? { ...candidate, pins: [...candidate.pins, pin] } : candidate
+      ),
+    });
+  },
+
+  removePinFromTrip: (tripId, pinId) => {
+    const { activeTrip, pastTrips } = get();
+    const trip = activeTrip?.id === tripId ? activeTrip : pastTrips.find((candidate) => candidate.id === tripId);
+    const pin = trip?.pins.find((candidate) => candidate.id === pinId);
+    if (!trip || !pin) return;
+
+    persistTripPinDeleted(pinId);
+    if (activeTrip?.id === tripId) {
+      set({ activeTrip: { ...activeTrip, pins: activeTrip.pins.filter((candidate) => candidate.id !== pinId) } });
+    } else {
+      set({
+        pastTrips: pastTrips.map((candidate) =>
+          candidate.id === tripId
+            ? { ...candidate, pins: candidate.pins.filter((candidatePin) => candidatePin.id !== pinId) }
+            : candidate
+        ),
+      });
+    }
+    void deletePinMedia(pin.uri, pin.thumbnailUri);
   },
 }));
 

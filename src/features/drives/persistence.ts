@@ -1,5 +1,6 @@
 import type { Pin, PinMediaType } from "@/features/map";
 import {
+  deleteDrivePinRow,
   deleteDriveRow,
   getAllDriveRows,
   getDriveNoteRows,
@@ -54,10 +55,14 @@ export function persistDrivePin(driveId: string, pin: Pin) {
     pin.uri,
     pin.mediaType,
     pin.thumbnailUri ?? null,
-    pin.coordinates.latitude,
-    pin.coordinates.longitude,
+    pin.coordinates?.latitude ?? null,
+    pin.coordinates?.longitude ?? null,
     pin.createdAt
   );
+}
+
+export function persistDrivePinDeleted(pinId: string) {
+  deleteDrivePinRow(pinId);
 }
 
 export function persistDriveNote(driveId: string, note: DriveNote) {
@@ -82,7 +87,7 @@ export function loadAllDrives(): Drive[] {
       uri: pin.uri,
       mediaType: pin.media_type as PinMediaType,
       thumbnailUri: pin.thumbnail_uri ?? undefined,
-      coordinates: { latitude: pin.latitude, longitude: pin.longitude },
+      coordinates: pin.has_location ? { latitude: pin.latitude, longitude: pin.longitude } : null,
       createdAt: pin.created_at,
     })),
     notes: getDriveNoteRows(row.id).map((note) => ({

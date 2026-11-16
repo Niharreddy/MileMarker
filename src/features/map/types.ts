@@ -11,7 +11,13 @@ export type Pin = {
   mediaType: PinMediaType;
   /** Durable static thumbnail for video pins (grids/map markers can't render a video frame directly). Unset for photos, which are their own thumbnail. */
   thumbnailUri?: string;
-  coordinates: Coordinates;
+  /**
+   * Where the photo/video was taken, or null when that isn't known — media
+   * added to a saved drive/trip after the fact only gets a position if the
+   * file itself carries GPS metadata. A pin without one still shows in every
+   * photo grid; it just has no marker on the map.
+   */
+  coordinates: Coordinates | null;
   createdAt: number;
 };
 

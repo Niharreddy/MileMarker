@@ -9,6 +9,8 @@ export {
 export type { AppTheme } from "./theme";
 export { radii } from "./radii";
 export type { Radii, RadiusKey } from "./radii";
+export { shadows } from "./shadows";
+export type { ShadowKey, Shadows } from "./shadows";
 export { spacing } from "./spacing";
 export type { Spacing, SpacingKey } from "./spacing";
 export { typography } from "./typography";

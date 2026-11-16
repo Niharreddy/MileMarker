@@ -3,14 +3,14 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import { AppSearchBar, AppText } from "@/components";
-import { spacing, useAppTheme } from "@/theme";
+import { radii, spacing, useAppTheme } from "@/theme";
 import { formatStartedAt } from "@/utils";
 
 import { useDriveStore } from "../store/driveStore";
 
 const MAX_RESULTS = 5;
 
-/** Search-by-name over past drives; tapping a result opens Drive detail. */
+/** Floating search-by-name (or by review text) over past drives; tapping a result opens Drive detail. */
 export function DriveSearchBar() {
   const theme = useAppTheme();
   const navigation = useNavigation();
@@ -20,7 +20,11 @@ export function DriveSearchBar() {
   const results = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
-    return pastDrives.filter((drive) => drive.name.toLowerCase().includes(trimmed)).slice(0, MAX_RESULTS);
+    return pastDrives
+      .filter(
+        (drive) => drive.name.toLowerCase().includes(trimmed) || drive.review.toLowerCase().includes(trimmed)
+      )
+      .slice(0, MAX_RESULTS);
   }, [query, pastDrives]);
 
   const handleSelect = (driveId: string) => {
@@ -29,13 +33,20 @@ export function DriveSearchBar() {
   };
 
   return (
-    <View style={styles.container}>
-      <AppSearchBar value={query} onChangeText={setQuery} placeholder="Search your drives" />
+    <View>
+      <AppSearchBar
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Search your drives"
+        elevation={2}
+        style={{ backgroundColor: theme.palette.surface }}
+      />
 
       {query.trim().length > 0 ? (
         <View
           style={[
             styles.results,
+            theme.shadows.md,
             { backgroundColor: theme.palette.surface, borderColor: theme.palette.border },
           ]}
         >
@@ -44,9 +55,19 @@ export function DriveSearchBar() {
               No drives match “{query.trim()}”.
             </AppText>
           ) : (
-            results.map((drive) => (
-              <Pressable key={drive.id} onPress={() => handleSelect(drive.id)} style={styles.resultRow}>
-                <AppText variant="titleSmall">{drive.name}</AppText>
+            results.map((drive, index) => (
+              <Pressable
+                key={drive.id}
+                onPress={() => handleSelect(drive.id)}
+                android_ripple={{ color: theme.palette.surfaceVariant }}
+                style={[
+                  styles.resultRow,
+                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.palette.border },
+                ]}
+              >
+                <AppText variant="titleSmall" numberOfLines={1}>
+                  {drive.name}
+                </AppText>
                 <AppText color="secondary" variant="bodySmall">
                   {formatStartedAt(drive.startedAt)}
                 </AppText>
@@ -60,16 +81,14 @@ export function DriveSearchBar() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.sm,
-  },
   results: {
     marginTop: spacing.xs,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    borderRadius: radii.lg,
     overflow: "hidden",
   },
   resultRow: {
-    padding: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
 });

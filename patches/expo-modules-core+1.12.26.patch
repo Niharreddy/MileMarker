@@ -1,0 +1,60 @@
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt
+index ae0a811..386f773 100644
+--- a/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/permissions/PermissionsService.kt
+@@ -163,7 +163,7 @@ open class PermissionsService(val context: Context) : InternalModule, Permission
+   override fun isPermissionPresentInManifest(permission: String): Boolean {
+     try {
+       context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)?.run {
+-        return requestedPermissions.contains(permission)
++        return requestedPermissions?.contains(permission) == true
+       }
+       return false
+     } catch (e: PackageManager.NameNotFoundException) {
+diff --git a/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt b/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt
+index 2719497..d29f5b4 100644
+--- a/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt
++++ b/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt
+@@ -24,18 +24,37 @@ class RNHeadlessAppLoader @DoNotStrip constructor(private val context: Context)
+     if (context.applicationContext is ReactApplication) {
+       val reactInstanceManager = (context.applicationContext as ReactApplication).reactNativeHost.reactInstanceManager
+       if (!appRecords.containsKey(params.appScopeKey)) {
++        // MileMarker patch: if the app (e.g. MainActivity on a cold start) has
++        // already started creating its React context, reuse it instead of
++        // calling recreateReactContextInBackground(). Recreating tears down the
++        // in-flight context, which races Expo's JSI install and crashes the
++        // process ("Cannot read property 'NativeModule' of undefined" /
++        // AVManager.installJSIBindings NPE). Such a context is owned by the
++        // activity, so it is not recorded here and invalidateApp() won't destroy it.
++        if (reactInstanceManager.hasStartedCreatingInitialContext()) {
++          if (reactInstanceManager.currentReactContext != null) {
++            HeadlessAppLoaderNotifier.notifyAppLoaded(params.appScopeKey)
++            callback?.apply(true)
++          } else {
++            reactInstanceManager.addReactInstanceEventListener(object : ReactInstanceEventListener {
++              override fun onReactContextInitialized(context: ReactContext) {
++                reactInstanceManager.removeReactInstanceEventListener(this)
++                HeadlessAppLoaderNotifier.notifyAppLoaded(params.appScopeKey)
++                callback?.apply(true)
++              }
++            })
++          }
++          return
++        }
+         reactInstanceManager.addReactInstanceEventListener(object : ReactInstanceEventListener {
+           override fun onReactContextInitialized(context: ReactContext) {
++            reactInstanceManager.removeReactInstanceEventListener(this)
+             HeadlessAppLoaderNotifier.notifyAppLoaded(params.appScopeKey)
+             callback?.apply(true)
+           }
+         })
+         appRecords[params.appScopeKey] = reactInstanceManager
+-        if (reactInstanceManager.hasStartedCreatingInitialContext()) {
+-          reactInstanceManager.recreateReactContextInBackground()
+-        } else {
+-          reactInstanceManager.createReactContextInBackground()
+-        }
++        reactInstanceManager.createReactContextInBackground()
+       } else {
+         alreadyRunning?.run()
+       }

@@ -1,9 +1,13 @@
+import type { Pin, PinMediaType } from "@/features/map";
 import {
+  deleteTripPinRow,
   deleteTripRow,
   getAllTripRows,
   getTripNoteRows,
+  getTripPinRows,
   initDatabase,
   insertTripNoteRow,
+  insertTripPinRow,
   insertTripRow,
   updateTripDetailsRow,
   updateTripEndedAtRow,
@@ -42,6 +46,23 @@ export function persistTripNote(tripId: string, note: TripNote) {
   insertTripNoteRow(note.id, tripId, note.text, note.coordinates.latitude, note.coordinates.longitude, note.createdAt);
 }
 
+export function persistTripPin(tripId: string, pin: Pin) {
+  insertTripPinRow(
+    pin.id,
+    tripId,
+    pin.uri,
+    pin.mediaType,
+    pin.thumbnailUri ?? null,
+    pin.coordinates?.latitude ?? null,
+    pin.coordinates?.longitude ?? null,
+    pin.createdAt
+  );
+}
+
+export function persistTripPinDeleted(pinId: string) {
+  deleteTripPinRow(pinId);
+}
+
 export function loadAllTrips(): Trip[] {
   return getAllTripRows().map((row) => ({
     id: row.id,
@@ -55,6 +76,14 @@ export function loadAllTrips(): Trip[] {
       text: note.text,
       coordinates: { latitude: note.latitude, longitude: note.longitude },
       createdAt: note.created_at,
+    })),
+    pins: getTripPinRows(row.id).map((pin) => ({
+      id: pin.id,
+      uri: pin.uri,
+      mediaType: pin.media_type as PinMediaType,
+      thumbnailUri: pin.thumbnail_uri ?? undefined,
+      coordinates: pin.has_location ? { latitude: pin.latitude, longitude: pin.longitude } : null,
+      createdAt: pin.created_at,
     })),
   }));
 }

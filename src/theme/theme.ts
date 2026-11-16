@@ -13,6 +13,7 @@ import {
 
 import { darkColors, lightColors } from "./colors";
 import { radii } from "./radii";
+import { shadows } from "./shadows";
 import { spacing } from "./spacing";
 import { typography } from "./typography";
 
@@ -70,6 +71,7 @@ function buildAppTheme(paperTheme: MD3Theme, colors: typeof lightColors, dark: b
     spacing,
     radii,
     typography,
+    shadows,
     palette: colors,
   };
 }

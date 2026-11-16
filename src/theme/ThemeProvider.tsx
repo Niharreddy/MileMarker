@@ -1,4 +1,5 @@
 import React, { type PropsWithChildren } from "react";
+import { StatusBar } from "react-native";
 import { PaperProvider } from "react-native-paper";
 
 import { useAppColorScheme } from "@/hooks";
@@ -15,5 +16,11 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
   const scheme = useAppColorScheme();
   const theme = scheme === "dark" ? darkTheme : lightTheme;
 
-  return <PaperProvider theme={theme}>{children}</PaperProvider>;
+  return (
+    <PaperProvider theme={theme}>
+      {/* Icon color only — no `translucent`/background, so native-stack headers keep their own status-bar inset handling. */}
+      <StatusBar barStyle={scheme === "dark" ? "light-content" : "dark-content"} />
+      {children}
+    </PaperProvider>
+  );
 }

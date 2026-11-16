@@ -19,6 +19,9 @@ export function usePermission(
       .then((response) => {
         if (!cancelled) setStatus(response.status);
       })
+      .catch(() => {
+        // Leave status UNDETERMINED — a later `request()` will try again.
+      })
       .finally(() => {
         if (!cancelled) setIsChecking(false);
       });
